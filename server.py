@@ -10,16 +10,22 @@ oauth = OAuth2Provider(app)
 
 
 class Client():
-	def __init__(self, client_id, secret, _redirect_uris, insert=False):
-		#add check that client isn't already there
-		if insert:
-	    	mongo.clients.insert({'client_id': client_id, 'secret':secret, '_redirect_uris', _redirect_uris})
+	def __init__(self, client_id, secret, _redirect_uris):
 	    self.client_id = "example_app"
 	    self.client_secret = "abc123"
 	    _redirect_uris = ["secret_callback"]
 
+	def save(self, mogno):
+		mongo.clients.insert({
+			'client_id': client_id,
+			'secret':secret,
+			'_redirect_uris': _redirect_uris
+		})
+
+		return self
+
 	@staticmethod
-	def get_client(self, mongo, client_id):
+	def get(mongo, client_id):
 		client =  mongo.clients.find_one({"client_id": client_id})
     	return Client(client**)
 
@@ -40,18 +46,22 @@ class Client():
         return self.redirect_uris[0]
 
 class Grant():
-	def __init__(self, user_id, client_id, code, redirect_uri, expires, insert=False):
-		if insert:
-   			mongo.clients.insert({'_id': client_id, 'secret':secret, '_redirect_uris', _redirect_uris})
-
+	def __init__(self, user_id, client_id, code, redirect_uri, expires):
    		self.user_id = user_id
    		self.client_id = client_id
    		self.code = code
    		self.redirect_uri = redirect_uri
    		self.expires = expires
 
+   	def save(self, mongo):
+   		mongo.clients.insert({
+   			'_id': client_id,
+   			'secret':secret,
+   			'_redirect_uris':  _redirect_uris
+   		})
+
 	@staticmethod
-	def get_grant(self, mongo, client_id):
+	def get(mogno, client_id):
 		grant =  mongo.grants.find_one({'client_id':client_id, 'code':code})
     	return Grant(grant**)
 
@@ -61,78 +71,76 @@ class Grant():
 
 
 class Token(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(
-        db.String(40), db.ForeignKey('client.client_id'),
-        nullable=False,
-    )
-    client = db.relationship('Client')
+	def __init__(self, access_token, refresh_token, token_type, expires, client_id, user_id):
+		self.access_token = access_token
+		self.refresh_token = refresh_token
+		self.token_type = token_type
+		self.expires = expires
+		self.client_id = client_id
+		self.user_id = user_id
 
-    user_id = db.Column(
-        db.Integer, db.ForeignKey('user.id')
-    )
-    user = db.relationship('User')
+	def save(mongo):
+		mongo.tokens.insert({
+				'access_token' : self.access_token,
+				'refresh_token' : self.refresh_token,
+				'token_type'	: self.token_type
+				'expires'	: self.expires,
+				'client_id'	: self.client_id,
+				'user_id'	: self.user_id
+			})
 
-    # currently only bearer is supported
-    token_type = db.Column(db.String(40))
+	@staticmethod
+	def find(mongo, query):
+		return mogno.tokens.find(query)
 
-    access_token = db.Column(db.String(255), unique=True)
-    refresh_token = db.Column(db.String(255), unique=True)
-    expires = db.Column(db.DateTime)
-    _scopes = db.Column(db.Text)
+	@staticmethod
+	def get(mongo, token):
+		mongo.tokens.find_one({"access_token": token})
 
     def delete(self):
-        db.session.delete(self)
-        db.session.commit()
+        mongo.remove({'access_token': self.access_token})
         return self
-
-    @property
-    def scopes(self):
-        if self._scopes:
-            return self._scopes.split()
-        return []
 
 
 @oauth.clientgetter
 def load_client(client_id):
-    return Client.get_client(client_id)
+    return Client.get(client_id)
 
 @oauth.grantgetter
 def load_grant(client_id, code):
-    return Grant.query.filter_by(client_id=client_id, code=code).first()
+    return Grant.get(client_id=client_id, code=code).first()
 
 @oauth.grantsetter
 def save_grant(client_id, code, request, *args, **kwargs):
     # decide the expires time yourself
-    expires = datetime.utcnow() + timedelta(seconds=100)
+    GRANT_LIFETIME = 100
+    expires = datetime.utcnow() + timedelta(seconds=GRANT_LIFETIME)
     grant = Grant(
         client_id=client_id,
         code=code['code'],
         redirect_uri=request.redirect_uri,
         _scopes=' '.join(request.scopes),
         user=get_current_user(),
-        expires=expires
+        expires=expires,
+        insert = True
     )
-    db.session.add(grant)
-    db.session.commit()
     return grant
 
 
 @oauth.tokengetter
 def load_token(access_token=None, refresh_token=None):
     if access_token:
-        return Token.query.filter_by(access_token=access_token).first()
-    elif refresh_token:
-        return Token.query.filter_by(refresh_token=refresh_token).first()
-
+        return Token.get(access_token=access_token)
 
 @oauth.tokensetter
 def save_token(token, request, *args, **kwargs):
-    toks = Token.query.filter_by(client_id=request.client.client_id,
-                                 user_id=request.user.id)
+    toks = Token.find({
+    	'client_id':request.client.client_id,
+        'user_id':request.user.id
+    })
     # make sure that every client has only one token connected to a user
     for t in toks:
-        db.session.delete(t)
+        mongo.tokens.remove(t)
 
     expires_in = token.pop('expires_in')
     expires = datetime.utcnow() + timedelta(seconds=expires_in)
@@ -146,8 +154,7 @@ def save_token(token, request, *args, **kwargs):
         client_id=request.client.client_id,
         user_id=request.user.id,
     )
-    db.session.add(tok)
-    db.session.commit()
+    tok.save(token)
     return tok
 
 
