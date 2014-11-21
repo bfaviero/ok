@@ -15,6 +15,7 @@ def get_service_ticket(userid, service, tgt, realm='ATHENA.MIT.EDU'):
     # write the tgt to a temporary cache file
     open(tgt_cache).write(tgt)
 
+    # execute kinit, tell it to use cached tgt
     KINIT_PATH = '/usr/bin/kinit'
     kinit_args = [KINIT_PATH, '-f', '-c', ticket_file,'-k', keytab_file,
             '-I', tgt_cache, '-S', service, userid + '@' + realm]
@@ -38,9 +39,14 @@ def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
 
     KINIT_PATH = '/usr/bin/kinit'
     kinit_args = [KINIT_PATH, '-f', '-c', tgt_file, '-k', keytab_file, userid + '@' + realm]
+
+    # exec kinit
     kinit = subprocess.Popen(kinit_args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    kinit.stdin.write(passwd + '\n')
-    kinit.wait()
+    kinit.stdin.write(passwd + '\n')    # write password
+    kinit.wait()                        # wait for completion
+
+    # get the generated tgt
     tgt = open(tgt_file).read()
-    os.remove(tgt_file)
+    os.remove(tgt_file)     # delete cached tgt
+
     return tgt
