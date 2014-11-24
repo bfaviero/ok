@@ -1,28 +1,24 @@
+import pdb
 class Client():
-    def __init__(self, client_id, secret, _redirect_uris):
-        self.client_id = "example_app"
-        self.client_secret = "abc123"
-        _redirect_uris = ["secret_callback"]
+    def __init__(self, _id, secret, _redirect_uris):
+        self._id = _id
+        self.secret = secret
+        self._redirect_uris = _redirect_uris
+        self.default_scopes = ['tgt']
 
-    def save(self, mogno):
+    def save(self, mongo):
         mongo.clients.insert({
-            'client_id': client_id,
-            'secret':secret,
-            '_redirect_uris': _redirect_uris
+        	'_id' : self._id,
+            'secret': self.secret,
+            '_redirect_uris': self._redirect_uris
         })
 
         return self
 
     @property
-    def client_type(self):
-        if self.is_confidential:
-            return 'confidential'
-        return 'public'
-
-    @property
     def redirect_uris(self):
         if self._redirect_uris:
-            return self._redirect_uris.split()
+            return self._redirect_uris#.split()
         return []
 
     @property
@@ -31,7 +27,9 @@ class Client():
 
     @staticmethod
     def get(mongo, client_id):
-        client =  mongo.clients.find_one({"client_id": client_id})
+        client =  mongo.clients.find_one({"_id": client_id})
+        print client
+        # pdb.set_trace()
         return Client(**client)
 
 class Grant():
@@ -41,6 +39,8 @@ class Grant():
         self.code = code
         self.redirect_uri = redirect_uri
         self.expires = expires
+        # self.scopes = ["tgt"]
+
 
     def save(self, mongo):
         mongo.clients.insert({
@@ -54,13 +54,14 @@ class Grant():
         grant =  mongo.grants.find_one({'client_id':client_id, 'code':code})
         return Grant(**grant)
 
-    def delete(self):
-        mongo.grants.remove({'client_id':client_id, 'code':code})
+    def delete(self, mongo):
+        mongo.grants.remove({'client_id':self.client_id, 'code':self.code})
         return self
 
 
-class Token(db.Model):
-    def __init__(self, access_token, refresh_token, token_type, expires, client_id, user_id):
+
+class Token():
+    def __init__(self, access_token, expires, client_id, user_id):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.token_type = token_type
@@ -86,6 +87,14 @@ class Token(db.Model):
     def get(mongo, token):
         mongo.tokens.find_one({"access_token": token})
 
-    def delete(self):
-        mongo.remove({'access_token': self.access_token})
-        return self
+	def encrypt(self, secret):
+		encrypted = self.access_token #use secret
+		return EncryptedToken(encrypted)
+
+class EncryptedToken():
+	def __init__(self, access_token):
+		self.access_token = access_token
+
+	def decrypt(self, secret):
+		return Token()
+
