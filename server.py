@@ -41,7 +41,7 @@ def save_grant(client_id, code, request, *args, **kwargs):
 @oauth.tokengetter
 def load_token(access_token=None, refresh_token=None):
     if access_token:
-        return EncryptedToken(access_token=access_token).depcrypt(CONFIG.token_secret)
+        return EncryptedToken(access_token=access_token).decrypt(CONFIG.token_secret)
 
 @oauth.tokensetter
 def save_token(token, request, *args, **kwargs):
@@ -50,7 +50,7 @@ def save_token(token, request, *args, **kwargs):
 
 def tgt_token_generator(req):
     print req
-    
+
     print req.body
     username = req.body['username']
     password = req.body['password']
@@ -76,7 +76,7 @@ def authorize(*args, **kwargs):
         return render_template('authorize.html', **kwargs)
 
     confirm = request.form.get('confirm', 'no')
-    return confirm == 'yes' 
+    return confirm == 'yes'
 
 
 
@@ -97,6 +97,6 @@ if __name__ == '__main__':
     mongo = pymongo.MongoClient("localhost", 27017).ok
     setup()
     app.debug = True
-    app.run()   
+    app.run()
 
     #http://localhost:5000/oauth/authorize?client_id=test_client_1&response_type=token&username=test_user

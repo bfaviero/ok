@@ -12,3 +12,4 @@ itsdangerous==0.24
 rauth==0.7.0
 requests==2.4.3
 pymongo
+pbkdf2

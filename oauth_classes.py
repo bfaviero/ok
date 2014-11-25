@@ -1,4 +1,6 @@
 import pdb
+from crypt import Cipher
+
 class Client():
     def __init__(self, _id, secret, _redirect_uris):
         self._id = _id
@@ -88,13 +90,13 @@ class Token():
         mongo.tokens.find_one({"access_token": token})
 
 	def encrypt(self, secret):
-		encrypted = self.access_token #use secret
-		return EncryptedToken(encrypted)
+		access_token = Cipher.encrypt(self.access_token, secret)
+        return EncryptedToken(access_token)
 
 class EncryptedToken():
 	def __init__(self, access_token):
 		self.access_token = access_token
 
-	def decrypt(self, secret):
-		return Token()
-
+	def decrypt(self, enc, secret):
+		original_value = Cipher.decrypt(enc, secret)
+        return original_value
