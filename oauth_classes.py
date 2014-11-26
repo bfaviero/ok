@@ -53,8 +53,9 @@ class Grant():
         	'client_id' : self.client_id,
         	'redirect_uri' : self.redirect_uri,
         	})
-
-    	return Cipher.encrypt(code, secret)
+        
+        enc = Cipher.encrypt(code, secret)        
+    	return  enc
 
 
     @staticmethod

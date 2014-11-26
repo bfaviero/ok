@@ -22,7 +22,8 @@ class Cipher:
         ocb.setKey(key)
         ocb.setNonce(nonce)
         (tag,ciphertext) = ocb.encrypt(plaintext, header)
-        return b64encode(nonce + tag + ciphertext)
+        enc = b64encode(nonce + tag + ciphertext)
+        return enc
 
     @staticmethod
     def decrypt(enc, secret):

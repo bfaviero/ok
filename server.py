@@ -29,6 +29,7 @@ def load_client(client_id):
 def load_grant(client_id, code):
     #code is our encrypted data structure
     g =  Grant.decrypt(code, CONFIG.secret)
+    print '!' + g.password + '!'
     return g
 
 @oauth.grantsetter
@@ -51,7 +52,7 @@ def save_token(token, request, *args, **kwargs):
 def tgt_token_generator(req):
     enc = req.body['code']
     g =  Grant.decrypt(code, CONFIG.secret)
-    tgt = kerberos_client.get_tgt(g.user, g.password)
+    tgt = "test"#kerberos_client.get_tgt(g.user, g.password)
     print "tgt aquired for %s" % (g.user)
     # pdb.set_trace()
     return Token(tgt, g.client_id, g.user).encrypt_to_string(CONFIG.secret)# .encrypt(CONFIG.secret1).access_token
