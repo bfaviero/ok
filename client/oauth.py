@@ -39,7 +39,7 @@ class OKServerSignIn(OAuthSignIn):
             client_id=self.consumer_id,
             client_secret=self.consumer_secret,
             authorize_url='http://localhost:5000/oauth/authorize',
-            access_token_url='http://localhost:5000/oauth/authorize',
+            access_token_url='http://localhost:5000/oauth/token',
             base_url='http://localhost:5000/oauth/'
         )
 
@@ -58,6 +58,8 @@ class OKServerSignIn(OAuthSignIn):
                   'grant_type': 'authorization_code',
                   'redirect_uri': self.get_callback_url()}
         )
+        import pdb
+        pdb.set_trace()
         me = oauth_session.get('me').json()
         return (
             'facebook$' + me['id'],

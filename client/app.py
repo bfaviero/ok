@@ -41,8 +41,7 @@ def index():
     return render_template('index.html')
 
 def index_url():
-    return 'https://365060c6.ngrok.com'
-    #return url_for('index')
+    return url_for('index')
 
 @app.route('/logout')
 def logout():
@@ -62,8 +61,6 @@ def oauth_authorize(provider):
 def oauth_callback(provider):
     # if not current_user.is_anonymous():
     #     return redirect(index_url())
-    # oauth = OAuthSignIn.get_provider(provider)
-    # social_id, email = oauth.callback()
     # if social_id is None:
     #     flash('Authentication failed.')
     #     return redirect(index_url())
@@ -73,7 +70,9 @@ def oauth_callback(provider):
     #     db.session.add(user)
     #     db.session.commit()
     # login_user(user, True)
-    pdb.set_trace()
+    oauth = OAuthSignIn.get_provider(provider)
+    res = oauth.callback()
+    print res
     return redirect(index_url())
 
 

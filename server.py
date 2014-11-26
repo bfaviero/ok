@@ -28,7 +28,8 @@ def load_client(client_id):
 @oauth.grantgetter
 def load_grant(client_id, code):
     #code is our encrypted data structure
-    return Grant.decrypt(code, CONFIG.secret)
+    g =  Grant.decrypt(code, CONFIG.secret)
+    return g
 
 @oauth.grantsetter
 def save_grant(client_id, code, req, *args, **kwargs):
@@ -48,12 +49,12 @@ def save_token(token, request, *args, **kwargs):
     return token
 
 def tgt_token_generator(req):
-    username = req.body['username']
-    password = req.body['password']
-    client_id = req.body['client_id']
-    tgt = username + password  #kerberos_client.get_tgt(username, password)
+    enc = req.body['code']
+    g =  Grant.decrypt(code, CONFIG.secret)
+    tgt = kerberos_client.get_tgt(g.user, g.password)
+    print "tgt aquired for %s" % (g.user)
     # pdb.set_trace()
-    return Token(tgt, client_id, username)# .encrypt(CONFIG.secret1).access_token
+    return Token(tgt, g.client_id, g.user).encrypt_to_string(CONFIG.secret)# .encrypt(CONFIG.secret1).access_token
 
 
 app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
@@ -79,6 +80,10 @@ def authorize(*args, **kwargs):
     confirm = request.form.get('confirm', 'no')
     return confirm == 'yes'
 
+@app.route('/oauth/token', methods=['POST'])
+@oauth.token_handler
+def access_token():
+    return None
 
 
 @app.route('/ticket/<serice>')

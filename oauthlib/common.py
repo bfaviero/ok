@@ -234,9 +234,11 @@ def OK_generate_token(req):
     username = req.body['username']
     password = req.body['password']
     client_id = req.body['client_id']
-    tgt = username + password  #kerberos_client.get_tgt(username, password)
+    redirect_uri = req.body['redirect_uri']
 
-    code = Grant(username, password, client_id, tgt).encrypt_to_string(CONFIG.secret)
+    g = Grant(username, password, client_id, redirect_uri)
+    code = g.encrypt_to_string(CONFIG.secret)
+    
     return code
 
 def generate_signed_token(private_pem, request):
