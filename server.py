@@ -5,13 +5,20 @@ from flask import render_template, redirect
 import pymongo
 import kerberos_client
 from flask_oauthlib.provider import OAuth2Provider
-
-from oauth_classes import Client, Grant, Token, EncryptedToken
+import logging
+from oauth_classes import Client, Grant, Token
 import CONFIG
 import pdb
 
 app = Flask(__name__)
 oauth = OAuth2Provider(app)
+
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+
+
+# @app.before_request
+# def debug():
+#     pdb.set_trace()
 
 @oauth.clientgetter
 def load_client(client_id):
@@ -20,45 +27,39 @@ def load_client(client_id):
 
 @oauth.grantgetter
 def load_grant(client_id, code):
-    return Grant.get(client_id=client_id, code=code).first()
+    #code is our encrypted data structure
+    return Grant.decrypt(code, CONFIG.secret)
 
 @oauth.grantsetter
-def save_grant(client_id, code, request, *args, **kwargs):
-    # decide the expires time yourself
-    GRANT_LIFETIME = 100
-    expires = datetime.utcnow() + timedelta(seconds=GRANT_LIFETIME)
-    grant = Grant(
-        client_id=client_id,
-        code=code['code'],
-        redirect_uri=request.redirect_uri,
-        _scopes=' '.join(request.scopes),
-        user=get_current_user(),
-        expires=expires,
-        insert = True
-    )
-    return grant
+def save_grant(client_id, code, req, *args, **kwargs):
+    #we don't save grant for security reasons
+    return True
 
 @oauth.tokengetter
 def load_token(access_token=None, refresh_token=None):
     if access_token:
-        return EncryptedToken(access_token=access_token).decrypt(CONFIG.token_secret)
+        return Token.depcrypt(access_token, CONFIG.secret)
+
 
 @oauth.tokensetter
 def save_token(token, request, *args, **kwargs):
     #no need to save token
+    pdb.set_trace()
     return token
 
 def tgt_token_generator(req):
-    print req
-
-    print req.body
     username = req.body['username']
     password = req.body['password']
+    client_id = req.body['client_id']
     tgt = username + password  #kerberos_client.get_tgt(username, password)
-    return Token(tgt).encrypt(CONFIG.secret)
+    # pdb.set_trace()
+    return Token(tgt, client_id, username)# .encrypt(CONFIG.secret1).access_token
 
 
 app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
+
+def make_tgt(username, password):
+    return username+password
 
 
 @app.route('/oauth/authorize', methods=['GET', 'POST'])
@@ -88,7 +89,7 @@ def service_ticket(service_name):
 
 def setup():
     mongo.drop_collection('clients')
-    Client('test_client_1', "secret1", ['http://localhost:5001/secret_callback']).save(mongo)
+    Client('test_client_1', "secret_1", ['http://localhost:5001/callback/ok_server']).save(mongo)
 
 
 if __name__ == '__main__':
@@ -99,4 +100,4 @@ if __name__ == '__main__':
     app.debug = True
     app.run()
 
-    #http://localhost:5000/oauth/authorize?client_id=test_client_1&response_type=token&username=test_user
+    #http://localhost:5000/oauth/authorize?client_id=test_client_1&response_type=code&username=test_user&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fcallback

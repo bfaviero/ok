@@ -19,7 +19,6 @@ class OAuthSignIn(object):
     def get_callback_url(self):
         url = url_for('oauth_callback', provider=self.provider_name,
                        _external=True)
-        url = 'https://365060c6.ngrok.com/callback/' + self.provider_name
         return url
 
     @classmethod
@@ -30,6 +29,42 @@ class OAuthSignIn(object):
                 provider = provider_class()
                 self.providers[provider.provider_name] = provider
         return self.providers[provider_name]
+
+
+class OKServerSignIn(OAuthSignIn):
+    def __init__(self):
+        super(OKServerSignIn, self).__init__('ok_server')
+        self.service = OAuth2Service(
+            name='ok_server',
+            client_id=self.consumer_id,
+            client_secret=self.consumer_secret,
+            authorize_url='http://localhost:5000/oauth/authorize',
+            access_token_url='http://localhost:5000/oauth/authorize',
+            base_url='http://localhost:5000/oauth/'
+        )
+
+    def authorize(self):
+        return redirect(self.service.get_authorize_url(
+            scope='tgt',
+            response_type='code',
+            redirect_uri=self.get_callback_url())
+        )
+
+    def callback(self):
+        if 'code' not in request.args:
+            return None, None
+        oauth_session = self.service.get_auth_session(
+            data={'code': request.args['code'],
+                  'grant_type': 'authorization_code',
+                  'redirect_uri': self.get_callback_url()}
+        )
+        me = oauth_session.get('me').json()
+        return (
+            'facebook$' + me['id'],
+            me.get('email')
+        )
+
+
 
 
 class FacebookSignIn(OAuthSignIn):

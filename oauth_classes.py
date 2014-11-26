@@ -1,5 +1,7 @@
+import json
 import pdb
-from crypt import Cipher
+from ok_crypto import Cipher
+import CONFIG
 
 class Client():
     def __init__(self, _id, secret, _redirect_uris):
@@ -35,50 +37,65 @@ class Client():
         return Client(**client)
 
 class Grant():
-    def __init__(self, user_id, client_id, code, redirect_uri, expires):
-        self.user_id = user_id
+    def __init__(self, username, password, client_id, tgt):
+        self.username = username
+        self.password = password
         self.client_id = client_id
-        self.code = code
-        self.redirect_uri = redirect_uri
-        self.expires = expires
-        # self.scopes = ["tgt"]
+        self.tgt = tgt
+        # self.redirect_uri = redirect_uri
+        # self.expires = expires
+        # pdb.set_trace()
+        self.scopes = ["tgt"]
 
+    def encrypt_to_string(self, secret):
+        code = json.dumps({
+        	'username':username,
+        	'password' : password,
+        	'client_id' : client_id,
+        	'tgt' : tgt,
+        	})
 
-    def save(self, mongo):
-        mongo.clients.insert({
-            '_id': client_id,
-            'secret':secret,
-            '_redirect_uris':  _redirect_uris
-        })
+    	return Cipher.encrypt(code, secret)
+
 
     @staticmethod
-    def get(mogno, client_id):
-        grant =  mongo.grants.find_one({'client_id':client_id, 'code':code})
-        return Grant(**grant)
+    def decrypt(enc, secret):
+    	code = Cipher.decrypt(enc, secret)
+
+    	vals = json.load(code)
+
+    	username = vals['username']
+    	password = vals['password']
+    	client_id = vals['client_id']
+    	tgt = vals['tgt']
+
+        return Grant(username, password, client_id, tgt)
 
     def delete(self, mongo):
-        mongo.grants.remove({'client_id':self.client_id, 'code':self.code})
-        return self
+    	#no need to delete since we never saved it
+    	return True
 
 
 
 class Token():
-    def __init__(self, access_token, expires, client_id, user_id):
-        self.access_token = access_token
-        self.refresh_token = refresh_token
-        self.token_type = token_type
-        self.expires = expires
+    def __init__(self, tgt, client_id, username):
+        self.tgt = tgt
+        #self.expires = expires
         self.client_id = client_id
-        self.user_id = user_id
+        self.username = username
+
+        self.access_token = json.dumps({
+        	'tgt' : tgt,
+        	'client_id' : client_id,
+        	'username':username
+        	})
 
     def save(mongo):
         mongo.tokens.insert({
                 'access_token' : self.access_token,
-                'refresh_token' : self.refresh_token,
-                'token_type'    : self.token_type,
-                'expires'   : self.expires,
+                'tgt' : self.tgt,
                 'client_id' : self.client_id,
-                'user_id'   : self.user_id
+                'username'   : self.username
             })
 
     @staticmethod
@@ -90,6 +107,7 @@ class Token():
         mongo.tokens.find_one({"access_token": token})
 
 	def encrypt(self, secret):
+<<<<<<< Updated upstream
 		access_token = Cipher.encrypt(self.access_token, secret)
         return EncryptedToken(access_token)
 
@@ -100,3 +118,14 @@ class EncryptedToken():
 	def decrypt(self, enc, secret):
 		original_value = Cipher.decrypt(enc, secret)
         return original_value
+=======
+		encrypted = self.access_token #use secret
+		return EncryptedToken(encrypted)
+	
+	@staticmethod
+	def decrypt(self, token, secret):
+		#token = decrypt_token(token, secret)
+		p = json.load(token)
+		return Token(**p)
+
+>>>>>>> Stashed changes
