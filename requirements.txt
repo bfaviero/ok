@@ -13,3 +13,4 @@ rauth==0.7.0
 requests==2.4.3
 pymongo
 pbkdf2
+pyocb
