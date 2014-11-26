@@ -107,25 +107,6 @@ class Token():
         mongo.tokens.find_one({"access_token": token})
 
 	def encrypt(self, secret):
-<<<<<<< Updated upstream
 		access_token = Cipher.encrypt(self.access_token, secret)
         return EncryptedToken(access_token)
 
-class EncryptedToken():
-	def __init__(self, access_token):
-		self.access_token = access_token
-
-	def decrypt(self, enc, secret):
-		original_value = Cipher.decrypt(enc, secret)
-        return original_value
-=======
-		encrypted = self.access_token #use secret
-		return EncryptedToken(encrypted)
-	
-	@staticmethod
-	def decrypt(self, token, secret):
-		#token = decrypt_token(token, secret)
-		p = json.load(token)
-		return Token(**p)
-
->>>>>>> Stashed changes
