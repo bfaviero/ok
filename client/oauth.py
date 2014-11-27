@@ -1,6 +1,6 @@
 from rauth import OAuth2Service
 from flask import current_app, url_for, request, redirect, session
-
+import json
 
 class OAuthSignIn(object):
     providers = None
@@ -40,7 +40,7 @@ class OKServerSignIn(OAuthSignIn):
             client_secret=self.consumer_secret,
             authorize_url='http://localhost:5000/oauth/authorize',
             access_token_url='http://localhost:5000/oauth/token',
-            base_url='http://localhost:5000/oauth/'
+            base_url='http://localhost:5000/'
         )
 
     def authorize(self):
@@ -56,15 +56,11 @@ class OKServerSignIn(OAuthSignIn):
         oauth_session = self.service.get_auth_session(
             data={'code': request.args['code'],
                   'grant_type': 'authorization_code',
-                  'redirect_uri': self.get_callback_url()}
+                  'redirect_uri': self.get_callback_url()},
+            decoder=json.loads
         )
-        import pdb
-        pdb.set_trace()
-        me = oauth_session.get('me').json()
-        return (
-            'facebook$' + me['id'],
-            me.get('email')
-        )
+        username = oauth_session.get('username').json()
+        return username
 
 
 

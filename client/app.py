@@ -72,7 +72,7 @@ def oauth_callback(provider):
     # login_user(user, True)
     oauth = OAuthSignIn.get_provider(provider)
     res = oauth.callback()
-    print res
+    print 'successfully authenticated: ' + res['username']
     return redirect(index_url())
 
 

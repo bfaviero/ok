@@ -2,6 +2,7 @@ import json
 import pdb
 from ok_crypto import Cipher
 import CONFIG
+from datetime import datetime, timedelta
 
 class Client():
     def __init__(self, client_id, client_secret, _redirect_uris):
@@ -78,11 +79,13 @@ class Grant():
 
 
 class Token():
-    def __init__(self, tgt, client_id, user, redirect_uri):
+    def __init__(self, tgt, client_id, user, redirect_uri, expires):
         self.tgt = tgt
         self.client_id = client_id
         self.user = user
         self.redirect_uri = redirect_uri
+        self.expires = expires
+        self.scopes = ['tgt']
 
     def encrypt_to_string(self, secret):
         code = json.dumps({
@@ -90,6 +93,7 @@ class Token():
         	'client_id' : self.client_id,
             'user' : self.user,
         	'redirect_uri' : self.redirect_uri,
+            'expires' : self.expires.strftime(CONFIG.time_fmt)
         	})
 
     	return Cipher.encrypt(code, secret)
@@ -101,10 +105,11 @@ class Token():
 
     	vals = json.loads(code)
 
-    	user = vals['user']
-    	password = vals['tgt']
+    	tgt = vals['tgt']
         client_id = vals['client_id']
-    	redirect_uri = vals['redirect_uri']
+        user = vals['user']
+        redirect_uri = vals['redirect_uri']
+    	expires = datetime.strptime( vals['expires'], CONFIG.time_fmt)
 
-        return Token(tgt, client_id, user, redirect_uri)
+        return Token(tgt, client_id, user, redirect_uri, expires)
 

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from flask import Flask
-from flask import session, request
+from flask import session, request, jsonify
 from flask import render_template, redirect
 import pymongo
 import kerberos_client
@@ -9,6 +9,7 @@ import logging
 from oauth_classes import Client, Grant, Token
 import CONFIG
 import pdb
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 oauth = OAuth2Provider(app)
@@ -22,7 +23,6 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 @oauth.clientgetter
 def load_client(client_id):
-    print client_id
     return Client.get(mongo,client_id)
 
 @oauth.grantgetter
@@ -39,7 +39,7 @@ def save_grant(client_id, code, req, *args, **kwargs):
 @oauth.tokengetter
 def load_token(access_token=None, refresh_token=None):
     if access_token:
-        return Token.depcrypt(access_token, CONFIG.secret)
+        return Token.decrypt(access_token, CONFIG.secret)
 
 
 @oauth.tokensetter
@@ -52,9 +52,10 @@ def tgt_token_generator(req):
     g =  Grant.decrypt(code, CONFIG.secret)
     tgt = "test"#kerberos_client.get_tgt(g.user, g.password)
     redirect_uri = req.body['redirect_uri']
-    token = Token(tgt, g.client_id, g.user, redirect_uri).encrypt_to_string(CONFIG.secret)
+    expires = datetime.utcnow() + timedelta(seconds=100)
+    token = Token(tgt, g.client_id, g.user, redirect_uri, expires).encrypt_to_string(CONFIG.secret)
     print "token with tgt aquired for %s is %s" % (g.user, token)
-    return token # .encrypt(CONFIG.secret1).access_token
+    return token 
 
 
 app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
@@ -90,6 +91,14 @@ def access_token():
 @oauth.require_oauth('tgt')
 def service_ticket(service_name):
     return kerberos_client.get_service_ticket(tgt, service_name)
+
+@app.route('/username')
+@oauth.require_oauth('tgt')
+def username():
+    token = request.oauth.Authorization[len("Bearer "):]
+    t = Token.decrypt(token, CONFIG.secret)
+    return jsonify(username = t.user)
+
 
 
 def setup():
