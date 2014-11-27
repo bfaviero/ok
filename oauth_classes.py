@@ -71,23 +71,25 @@ class Grant():
 
         return Grant(user, password, client_id, redirect_uri)
 
-    def delete(self, mongo):
+    def delete(self):
     	#no need to delete since we never saved it
     	return True
 
 
 
 class Token():
-    def __init__(self, tgt, client_id, username):
+    def __init__(self, tgt, client_id, user, redirect_uri):
         self.tgt = tgt
         self.client_id = client_id
         self.user = user
+        self.redirect_uri = redirect_uri
 
     def encrypt_to_string(self, secret):
         code = json.dumps({
         	'tgt': self.tgt,
         	'client_id' : self.client_id,
-        	'user' : self.user,
+            'user' : self.user,
+        	'redirect_uri' : self.redirect_uri,
         	})
 
     	return Cipher.encrypt(code, secret)
@@ -101,7 +103,8 @@ class Token():
 
     	user = vals['user']
     	password = vals['tgt']
-    	client_id = vals['client_id']
+        client_id = vals['client_id']
+    	redirect_uri = vals['redirect_uri']
 
-        return Token(tgt, client_id, user)
+        return Token(tgt, client_id, user, redirect_uri)
 

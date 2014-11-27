@@ -237,7 +237,7 @@ class AuthorizationCodeGrant(GrantTypeBase):
             log.debug('Client error during validation of %r. %r.', request, e)
             return headers, e.json, e.status_code
 
-        token = token_handler.create_token(request, refresh_token=True)
+        token = token_handler.create_token(request, refresh_token=False)
         self.request_validator.invalidate_authorization_code(
             request.client_id, request.code, request)
         return headers, json.dumps(token), 200
