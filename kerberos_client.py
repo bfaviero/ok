@@ -12,7 +12,7 @@ import subprocess
 def get_service_ticket(userid, service, tgt, realm='ATHENA.MIT.EDU'):
     tmp_dir = os.path.join('/tmp', urlsafe_b64encode(userid + '@' + realm))
     if not os.path.exists(tmp_dir):
-        os.makedirs(tmp_dir)
+        os.mkdirs(tmp_dir)
 
     tgt_cache = os.path.join(tmp_dir, 'krb5cc_tgt')
     ticket_file = os.path.join(tmp_dir, 'krb5cc_svc')
@@ -43,7 +43,7 @@ def get_service_ticket(userid, service, tgt, realm='ATHENA.MIT.EDU'):
 def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
     tmp_dir = os.path.join('/tmp', urlsafe_b64encode(userid + '@' + realm))
     if not os.path.exists(tmp_dir):
-        os.makedir(tmp_dir)
+        os.mkdir(tmp_dir)
 
     tgt_file = os.path.join(tmp_dir, 'krb5cc')
     keytab_file = os.path.join('/etc', urlsafe_b64encode(userid + '@' + realm))
@@ -55,12 +55,15 @@ def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
     # exec kinit
     kinit = subprocess.Popen(kinit_args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
     print kinit.communicate(passwd + '\n')    # write password
-    print kinit.wait()                        # wait for completion
+    retcode = kinit.wait()                        # wait for completion
 
-    # get the generated tgt
-    tgt = open(tgt_file, 'r').read()
-    # delete cached tgt
-    os.remove(tgt_file)
+    if retcode == 0:
+        # get the generated tgt
+        tgt = open(tgt_file, 'r').read()
+        # delete cached tgt
+        os.remove(tgt_file)
+    else:
+        raise Exception("Error: kinit returned code " + str(retcode))
 
     return tgt
 
@@ -71,9 +74,11 @@ if __name__ == '__main__':
     uname, service = sys.argv[1:]
     passwd = getpass.getpass()
     tgt = get_tgt(uname, passwd)
+    print 'TGT generation success. Ticket is as follows:'
+    print
     print tgt
+    print
     svc_ticket = get_service_ticket(uname, service, tgt)
-    print 'success!'
     print
     print svc_ticket
 
