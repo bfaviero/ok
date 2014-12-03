@@ -60,9 +60,6 @@ def tgt_token_generator(req):
 
 app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
 
-def make_tgt(username, password):
-    return username+password
-
 
 @app.route('/oauth/authorize', methods=['GET', 'POST'])
 # @require_login
@@ -72,7 +69,6 @@ def authorize(*args, **kwargs):
         print kwargs
         client_id = kwargs.get('client_id')
         client = Client.get(mongo, client_id)
-        # pdb.set_trace()
         kwargs['client'] = client
         print kwargs
         kwargs['username'] = request.args.get('username')
@@ -97,7 +93,7 @@ def service_ticket(service_name):
 def username():
     token = request.oauth.Authorization[len("Bearer "):]
     t = Token.decrypt(token, CONFIG.secret)
-    return jsonify(username = t.user)
+    return jsonify(username = t.user, token=token)
 
 
 

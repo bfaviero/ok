@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, render_template
+from flask import Flask, redirect, url_for, render_template, session
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager, UserMixin, login_user, logout_user,\
     current_user
@@ -43,6 +43,18 @@ def index():
 def index_url():
     return url_for('index')
 
+
+@app.route('/authenticated')
+def authenticated():
+    if 'username' not in session:
+        return redirect(index_url())
+
+    return render_template('authenticated.html')
+
+def authenticated_url():
+    return url_for('authenticated')
+
+
 @app.route('/logout')
 def logout():
     logout_user()
@@ -71,9 +83,12 @@ def oauth_callback(provider):
     #     db.session.commit()
     # login_user(user, True)
     oauth = OAuthSignIn.get_provider(provider)
+    pdb.set_trace()
     res = oauth.callback()
+    session['username'] = res['username']
+    session['tgt'] = res['token']
     print 'successfully authenticated: ' + res['username']
-    return redirect(index_url())
+    return redirect(authenticated_url())
 
 
 if __name__ == '__main__':
