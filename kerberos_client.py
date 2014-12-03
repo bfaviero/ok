@@ -57,7 +57,7 @@ def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
     print kinit.communicate(passwd + '\n')    # write password
     retcode = kinit.wait()                        # wait for completion
 
-    if retcode == 0:
+    if str(retcode) == '0':
         # get the generated tgt
         tgt = open(tgt_file, 'r').read()
         # delete cached tgt
