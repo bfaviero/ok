@@ -1,7 +1,7 @@
 import json
 import pdb
 from ok_crypto import Cipher
-import SERVER_CONFIG
+import SERVER_CONFIG as CONFIG
 from datetime import datetime, timedelta
 import pickle
 

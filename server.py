@@ -6,7 +6,7 @@ import kerberos_client
 from flask_oauthlib.provider import OAuth2Provider
 import logging
 from oauth_classes import Client, Grant, Token
-import SERVER_CONFIG
+import SERVER_CONFIG as CONFIG
 import pdb
 from datetime import datetime, timedelta
 import pickle 
