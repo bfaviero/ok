@@ -43,6 +43,9 @@ class Client():
         with open(CONFIG.clients_db_file, 'r') as db:
             clients = pickle.load(db)
 
+        if client_id not in clients:
+            return None
+
         client = clients[client_id]
 
         return Client(**client)
