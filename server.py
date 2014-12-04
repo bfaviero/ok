@@ -66,8 +66,8 @@ def register(*args, **kwargs):
         client_id = str(request.form.get('client_id'))
         client_secret = str(request.form.get('client_secret'))
         client_callback = str(request.form.get('client_callback'))
-        client = client.get(client_id)
-        if not client:
+        client = Client.get(client_id)
+        if client:
             message = "Client already exists"
         else:
             message = "Client created"
