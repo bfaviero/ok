@@ -46,6 +46,7 @@ def authenticated():
 def authenticated_url():
     return url_for('authenticated')
 
+    #app.run(port=5001, debug=True, host='0.0.0.0', ssl_context=context)
 
 @app.route('/logout')
 def logout():
@@ -86,7 +87,7 @@ if __name__ == '__main__':
     # db.create_all()
     app.secret_key = CONFIG.secret_key
 
-    #context = SSL.Context(SSL.SSLv23_METHOD)
+    #context = SSL.Context(ssl.PROTOCOL_TLSv1_2)
     #context.use_privatekey_file('ssl.key')
     #context.use_certificate_file('ssl.crt')
     #app.run(port=5001, debug=True, host='0.0.0.0', ssl_context=context)
