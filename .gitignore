@@ -1,2 +1,3 @@
 CONFIG.py
 *.pyc
+*/__init__.pyc
