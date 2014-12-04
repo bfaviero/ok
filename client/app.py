@@ -84,4 +84,4 @@ def oauth_callback(provider):
 if __name__ == '__main__':
     # db.create_all()
     app.secret_key = CONFIG.secret_key
-    app.run(port=5001, debug=True)
+    app.run(port=5001, debug=True, host='0.0.0.0')
