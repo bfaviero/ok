@@ -1,7 +1,7 @@
 import json
 import pdb
 from ok_crypto import Cipher
-import CONFIG
+import SERVER_CONFIG as CONFIG
 from datetime import datetime, timedelta
 import pickle
 
@@ -42,6 +42,9 @@ class Client():
     def get(client_id):
         with open(CONFIG.clients_db_file, 'r') as db:
             clients = pickle.load(db)
+
+        if client_id not in clients:
+            return None
 
         client = clients[client_id]
 
