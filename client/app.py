@@ -3,6 +3,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from oauth import OAuthSignIn
 import pdb
 import CLIENT_CONFIG as CONFIG
+from OpenSSL import SSL
 
 
 
@@ -84,4 +85,9 @@ def oauth_callback(provider):
 if __name__ == '__main__':
     # db.create_all()
     app.secret_key = CONFIG.secret_key
+
+    #context = SSL.Context(SSL.SSLv23_METHOD)
+    #context.use_privatekey_file('ssl.key')
+    #context.use_certificate_file('ssl.crt')
+    #app.run(port=5001, debug=True, host='0.0.0.0', ssl_context=context)
     app.run(port=5001, debug=True, host='0.0.0.0')
