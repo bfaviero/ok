@@ -6,7 +6,7 @@ import kerberos_client
 from flask_oauthlib.provider import OAuth2Provider
 import logging
 from oauth_classes import Client, Grant, Token
-import CONFIG
+import SERVER_CONFIG
 import pdb
 from datetime import datetime, timedelta
 import pickle 
@@ -100,7 +100,7 @@ def username():
 def setup():
     with open(CONFIG.clients_db_file, 'w') as db:
         pickle.dump({}, db)
-    Client('test_client_1', "secret_1", ['http://localhost:5001/callback/ok_server']).save()
+    Client('test_client_1', CONFIG.client_secret, ['http://localhost:5001/callback/ok_server']).save()
 
 
 if __name__ == '__main__':

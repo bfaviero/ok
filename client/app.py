@@ -2,7 +2,7 @@ from flask import Flask, redirect, url_for, render_template, session
 from flask.ext.sqlalchemy import SQLAlchemy
 from oauth import OAuthSignIn
 import pdb
-import CONFIG
+import CLIENT_CONFIG
 
 
 
