@@ -83,7 +83,7 @@ def oauth_callback(provider):
     #     db.session.commit()
     # login_user(user, True)
     oauth = OAuthSignIn.get_provider(provider)
-    pdb.set_trace()
+    # pdb.set_rtace()
     res = oauth.callback()
     session['username'] = res['username']
     session['tgt'] = res['token']

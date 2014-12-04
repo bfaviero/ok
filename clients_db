@@ -1,0 +1,17 @@
+(dp0
+S'test_client_1'
+p1
+(dp2
+S'client_secret'
+p3
+S'secret_1'
+p4
+sS'client_id'
+p5
+g1
+sS'_redirect_uris'
+p6
+(lp7
+S'http://localhost:5001/callback/ok_server'
+p8
+ass.
