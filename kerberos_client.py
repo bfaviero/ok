@@ -1,40 +1,55 @@
 from flask import Flask
 from subprocess import Popen, PIPE
-from base64 import urlsafe_b64encode
+import base64
+import json
+import pycurl
+import StringIO
 import sys
 import getpass
+from flask import Flask
+from subprocess import Popen, PIPE
+from base64 import urlsafe_b64encode
 # import gssapi
 import os
 import subprocess
+import lib.krb5 as krb5
+import lib.krb5_ctypes as krb5_ctypes
+import lib.gss as gss
 
+# For testing
+def acquire_creds(realm, service):
+    # Get a context, and load the credential cache.
+    ctx = krb5.Context()
+    ccache = ctx.cc_default()
 
-# Get a ticket for a specific service. Doesn't work yet.
+    # Get principal names.
+    principal = ccache.get_principal()
+
+    #zephyr = ctx.build_principal('ATHENA.MIT.EDU', ['zephyr', 'zephyr'])
+    service = ctx.build_principal(realm, service)
+    creds = ccache.get_credentials(principal, zephyr)
+    return creds
+
+# Get a ticket for a specific service.
 def get_service_ticket(userid, service, tgt, realm='ATHENA.MIT.EDU'):
-    tmp_dir = os.path.join('/tmp', urlsafe_b64encode(userid + '@' + realm))
-    if not os.path.exists(tmp_dir):
-        os.mkdirs(tmp_dir)
+    # use davidben's handy c library wrappers to get the service ticket
+    ctx = krb5.Context()
+    ccache = krb5.CCache(ctx)
 
-    tgt_cache = os.path.join(tmp_dir, 'krb5cc_tgt')
-    ticket_file = os.path.join(tmp_dir, 'krb5cc_svc')
-    keytab_file = os.path.join('/etc', urlsafe_b64encode(userid + '@' + realm))
+    # create a new in-memory ccache to hold the credentials
+    krb5.krb5_cc_new_unique(ctx._handle,                # context
+            krb5_ctypes.ctypes.c_char_p('MEMORY'),      # type
+            krb5_ctypes.ctypes.c_char_p(),              # hint (blank)
+            ccache._handle)
+    #ccache = ctx.cc_default()
 
-    # write the tgt to a temporary cache file
-    open(tgt_cache, 'w+').write(tgt)
+    # TODO: store tgt in ccache
 
-    # execute kinit, tell it to use cached tgt
-    KINIT_PATH = '/usr/bin/kinit'
-    kinit_args = [KINIT_PATH, '-f', '-c', ticket_file, '-I', tgt_cache,
-                  '-S', service, userid + '@' + realm]
-    print ' '.join(kinit_args)
-    kinit = subprocess.Popen(kinit_args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    print kinit.wait()
+    # Get principal names.
+    principal = ccache.get_principal()
 
-    # delete the cached tgt
-    os.remove(tgt_cache)
-
-    # read the new ticket and then delete it
-    ticket = open(ticket_file).read()
-    os.remove(ticket_file)
+    service = ctx.build_principal(realm, service)
+    creds = ccache.get_credentials(principal, zephyr)
 
     return ticket
 
@@ -43,7 +58,7 @@ def get_service_ticket(userid, service, tgt, realm='ATHENA.MIT.EDU'):
 def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
     tmp_dir = os.path.join('/tmp', urlsafe_b64encode(userid + '@' + realm))
     if not os.path.exists(tmp_dir):
-        os.mkdir(tmp_dir)
+        os.mkdirs(tmp_dir)
 
     tgt_file = os.path.join(tmp_dir, 'krb5cc')
     keytab_file = os.path.join('/etc', urlsafe_b64encode(userid + '@' + realm))
