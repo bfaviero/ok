@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import flask
 from flask import Flask
 from flask import session, request, jsonify
 from flask import render_template, redirect
@@ -9,13 +10,12 @@ from oauth_classes import Client, Grant, Token
 import SERVER_CONFIG as CONFIG
 import pdb
 from datetime import datetime, timedelta
-import pickle 
+import pickle
 
 app = Flask(__name__)
 oauth = OAuth2Provider(app)
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
 
 # @app.before_request
 # def debug():
@@ -48,21 +48,36 @@ def save_token(token, request, *args, **kwargs):
     return token
 
 def tgt_token_generator(req):
-    code = req.body['code'] 
+    code = req.body['code']
     g =  Grant.decrypt(code, CONFIG.secret)
     tgt = 'test' #kerberos_client.get_tgt(g.user, g.password)
     redirect_uri = req.body['redirect_uri']
     expires = datetime.utcnow() + timedelta(seconds=100)
     token = Token(tgt, g.client_id, g.user, redirect_uri, expires).encrypt_to_string(CONFIG.secret)
     print "token with tgt aquired for %s is %s" % (g.user, token)
-    return token 
+    return token
 
 
 app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
 
+@app.route('/oauth/client/register', methods=['GET', 'POST'])
+def register(*args, **kwargs):
+    if request.method == 'POST':
+        client_id = str(request.form.get('client_id'))
+        client_secret = str(request.form.get('client_secret'))
+        client_callback = str(request.form.get('client_callback'))
+        client = Client.get(client_id)
+        if client:
+            message = "Client already exists"
+        else:
+            message = "Client created"
+            client = Client(client_id, client_secret, [client_callback])
+            client.save()
+        d = {'message': message}
+        return flask.jsonify(**d)
+    return render_template('register.html')
 
 @app.route('/oauth/authorize', methods=['GET', 'POST'])
-# @require_login
 @oauth.authorize_handler
 def authorize(*args, **kwargs):
     if request.method == 'GET':
@@ -76,6 +91,7 @@ def authorize(*args, **kwargs):
 
     confirm = request.form.get('confirm', 'no')
     return confirm == 'yes'
+
 
 @app.route('/oauth/token', methods=['POST'])
 @oauth.token_handler
@@ -100,7 +116,7 @@ def username():
 def setup():
     with open(CONFIG.clients_db_file, 'w') as db:
         pickle.dump({}, db)
-    Client('test_client_1', CONFIG.client_secret, ['http://localhost:5001/callback/ok_server']).save()
+    Client('test_client_1', "secret_1", [CONFIG.callback_url]).save()
 
 
 if __name__ == '__main__':
