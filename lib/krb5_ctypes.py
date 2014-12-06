@@ -9,6 +9,7 @@ KRB5_GC_CACHED = 2
 
 # Types
 krb5_int32 = ctypes.c_int32
+krb5_deltat = krb5_int32
 krb5_error_code = krb5_int32
 krb5_magic = krb5_error_code
 krb5_flags = krb5_int32
@@ -126,6 +127,20 @@ krb5_cc_new_unique.argtypes = (krb5_context,
                               ctypes.c_char_p,
                               ctypes.c_char_p,
                               ctypes.POINTER(krb5_ccache))
+
+krb5_get_init_creds_password = libkrb5.krb5_get_in_tkt_with_password
+krb5_get_init_creds_password.restype = krb5_error_code
+krb5_get_init_creds_password.argtypes = (krb5_context,
+                                krb5_creds_ptr,
+                                krb5_principal,
+                                ctypes.c_char_p,
+                                krb5_prompter_fct, #XXX
+                                ctypes.POINTER(None), # void pointer?
+                                krb5_deltat,
+                                ctypes.c_char_p,
+                                ctypes.POINTER(krb5_get_init_creds_opt))
+                                ctypes.POINTER(krb5_ccache))
+
 
 krb5_cc_get_principal = libkrb5.krb5_cc_get_principal
 krb5_cc_get_principal.restype = krb5_error_code
