@@ -20,7 +20,7 @@ class Client():
 
             clients[self.client_id] = {
                 'client_id'     : self.client_id,
-                'client_secret': self.client_secret,
+                'client_secret': Cipher.encrypt(self.client_secret, CONFIG.secret) ,
                 '_redirect_uris': self._redirect_uris
             }
 
@@ -47,6 +47,8 @@ class Client():
             return None
 
         client = clients[client_id]
+
+        client['client_secret'] = Cipher.decrypt(client['client_secret'], CONFIG.secret)
 
         return Client(**client)
 
