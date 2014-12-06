@@ -59,7 +59,7 @@
     background-image: none;
     border: 1px solid transparent;
     border-radius: 4px;
-    }    
+    }
 
     .ok-text {
     display: block;
@@ -79,31 +79,68 @@
     -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
     transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
 }
+    #banner {
+      width: 100%;
+      background: green;
+      text-align: center;
+      font-size: 40px;
+      position: absolute;
+      opacity: 0.98;
+      display: none;
+    }
 
   </style>
-
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 </head>
 <body>
+  <div id="banner">
+    Client Registered
+  </div>
   <div class="container">
   <div id="title">Welcome to OK Server</div>
   </div>
   <div id="form" class="container">
-    <div id="request">{{ client.client_id }} is requesting access</div>
-    <form action="/oauth/authorize" method="post">
-      <p>Allow access?</p>
-      <input type="hidden" name="client_id" value="{{ client.client_id }}">
-      <input type="hidden" name="scope" value="{{ scopes|join(' ') }}">
-      <input type="hidden" name="response_type" value="{{ response_type }}">
-      <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
-      {% if state %}
-      <input type="hidden" name="state" value="{{ state }}">
-      {% endif %}
-        <input class="ok-text" type="text" name="username" value="test_username"></input>
-        <input class="ok-text" type="password" name="password" value="test_password"></input>
+    <h4>Register a client</h4>
+    <form action="/oauth/client/register" name="form" method="post">
+      <input id="client_id" class="ok-text" type="text" name="client_id" value="" placeholder="client_id"></input>
+      <input id="client_secret" class="ok-text" type="text" name="client_secret" value="" placeholder="client_secret"></input>
+      <input id="client_secret" class="ok-text" type="text" name="client_callback" value="http://localhost:5001/callback/ok_server" placeholder="client_secret"></input>
 
       <input class="btn btn-yes" type="submit" name="confirm" value="yes">
       <input class="btn btn-no" type="submit" name="confirm" value="no">
     </form>
   </div>
+  <script>
+  $(document).ready(function() {
+    $('input[name="client_id"]').focus();
+    var frm = $('#form');
+    frm.submit(function (ev) {
+        var inputs = $('input').serializeArray();
+        if (Boolean(inputs[0].value && inputs[1].value && inputs[2].value)) {
+          $.ajax({
+              type: 'POST',
+              url: frm.attr('action'),
+              data: frm.find('input').serialize(),
+              success: function (data) {
+                showMessage(data.message, 3);
+              }
+          });
+        }
+        else {
+          showMessage('Please enter a username, password, and callback URL', 2);
+        }
+
+        ev.preventDefault();
+    });
+    function showMessage(message, seconds) {
+      $('#banner').text(message);
+      $('#banner').slideDown(function() {
+          setTimeout(function() {
+              $('#banner').slideUp();
+          }, 1000 * seconds);
+      });
+    }
+  });
+  </script>
 </body>
 </html>

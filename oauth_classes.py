@@ -1,8 +1,9 @@
 import json
 import pdb
 from ok_crypto import Cipher
-import CONFIG
+import SERVER_CONFIG as CONFIG
 from datetime import datetime, timedelta
+import pickle
 
 class Client():
     def __init__(self, client_id, client_secret, _redirect_uris):
@@ -11,13 +12,20 @@ class Client():
         self._redirect_uris = _redirect_uris
         self.default_scopes = ['tgt']
 
-    def save(self, mongo):
-        mongo.clients.insert({
-        	'client_id' : self.client_id,
-            'client_secret': self.client_secret,
-            '_redirect_uris': self._redirect_uris
-        })
+    def save(self):
+        with open(CONFIG.clients_db_file, 'r') as db:
+            clients = pickle.load(db)
 
+        with open(CONFIG.clients_db_file, 'w') as db:
+
+            clients[self.client_id] = {
+                'client_id'     : self.client_id,
+                'client_secret': self.client_secret,
+                '_redirect_uris': self._redirect_uris
+            }
+
+            pickle.dump(clients, db)
+        
         return self
 
     @property
@@ -31,10 +39,15 @@ class Client():
         return self.redirect_uris[0]
 
     @staticmethod
-    def get(mongo, client_id):
-        client =  mongo.clients.find_one({"client_id": client_id}, {'_id': False})
-        print client
-        # pdb.set_trace()
+    def get(client_id):
+        with open(CONFIG.clients_db_file, 'r') as db:
+            clients = pickle.load(db)
+
+        if client_id not in clients:
+            return None
+
+        client = clients[client_id]
+
         return Client(**client)
 
 class Grant():

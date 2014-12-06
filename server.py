@@ -1,21 +1,21 @@
 from datetime import datetime, timedelta
+import flask
 from flask import Flask
 from flask import session, request, jsonify
 from flask import render_template, redirect
-import pymongo
 import kerberos_client
 from flask_oauthlib.provider import OAuth2Provider
 import logging
 from oauth_classes import Client, Grant, Token
-import CONFIG
+import SERVER_CONFIG as CONFIG
 import pdb
 from datetime import datetime, timedelta
+import pickle
 
 app = Flask(__name__)
 oauth = OAuth2Provider(app)
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
 
 # @app.before_request
 # def debug():
@@ -23,7 +23,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 @oauth.clientgetter
 def load_client(client_id):
-    return Client.get(mongo,client_id)
+    return Client.get(client_id)
 
 @oauth.grantgetter
 def load_grant(client_id, code):
@@ -48,31 +48,42 @@ def save_token(token, request, *args, **kwargs):
     return token
 
 def tgt_token_generator(req):
-    code = req.body['code'] 
+    code = req.body['code']
     g =  Grant.decrypt(code, CONFIG.secret)
-    tgt = "test"#kerberos_client.get_tgt(g.user, g.password)
+    tgt = 'test' #kerberos_client.get_tgt(g.user, g.password)
     redirect_uri = req.body['redirect_uri']
     expires = datetime.utcnow() + timedelta(seconds=100)
     token = Token(tgt, g.client_id, g.user, redirect_uri, expires).encrypt_to_string(CONFIG.secret)
     print "token with tgt aquired for %s is %s" % (g.user, token)
-    return token 
+    return token
 
 
 app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
 
-def make_tgt(username, password):
-    return username+password
-
+@app.route('/oauth/client/register', methods=['GET', 'POST'])
+def register(*args, **kwargs):
+    if request.method == 'POST':
+        client_id = str(request.form.get('client_id'))
+        client_secret = str(request.form.get('client_secret'))
+        client_callback = str(request.form.get('client_callback'))
+        client = Client.get(client_id)
+        if client:
+            message = "Client already exists"
+        else:
+            message = "Client created"
+            client = Client(client_id, client_secret, [client_callback])
+            client.save()
+        d = {'message': message}
+        return flask.jsonify(**d)
+    return render_template('register.html')
 
 @app.route('/oauth/authorize', methods=['GET', 'POST'])
-# @require_login
 @oauth.authorize_handler
 def authorize(*args, **kwargs):
     if request.method == 'GET':
         print kwargs
         client_id = kwargs.get('client_id')
-        client = Client.get(mongo, client_id)
-        # pdb.set_trace()
+        client = Client.get(client_id)
         kwargs['client'] = client
         print kwargs
         kwargs['username'] = request.args.get('username')
@@ -80,6 +91,7 @@ def authorize(*args, **kwargs):
 
     confirm = request.form.get('confirm', 'no')
     return confirm == 'yes'
+
 
 @app.route('/oauth/token', methods=['POST'])
 @oauth.token_handler
@@ -97,19 +109,17 @@ def service_ticket(service_name):
 def username():
     token = request.oauth.Authorization[len("Bearer "):]
     t = Token.decrypt(token, CONFIG.secret)
-    return jsonify(username = t.user)
+    return jsonify(username = t.user, token=token)
 
 
 
 def setup():
-    mongo.drop_collection('clients')
-    Client('test_client_1', "secret_1", ['http://localhost:5001/callback/ok_server']).save(mongo)
+    with open(CONFIG.clients_db_file, 'w') as db:
+        pickle.dump({}, db)
+    Client('test_client_1', "secret_1", [CONFIG.callback_url]).save()
 
 
 if __name__ == '__main__':
-    global mongo
-    pymongo.MongoClient("localhost", 27017).drop_database('ok')
-    mongo = pymongo.MongoClient("localhost", 27017).ok
     setup()
     app.debug = True
     app.run()
