@@ -68,7 +68,7 @@ def register(*args, **kwargs):
     if request.method == 'POST':
         client_id = str(request.form.get('client_id'))
         client_callback = str(request.form.get('client_callback'))
-        serices = request.form.get('services')
+        services = request.form.getlist('service')
         client = Client.get(client_id)
         if client:
             message = "Client already exists"
@@ -90,7 +90,6 @@ def authorize(*args, **kwargs):
         kwargs['client'] = client
         kwargs['username'] = request.args.get('username')
         kwargs['services'] = client.services
-                
         return render_template('authorize.html', **kwargs)
 
     confirm = request.form.get('confirm', 'no')
