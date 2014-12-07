@@ -11,6 +11,7 @@ import SERVER_CONFIG as CONFIG
 import pdb
 from datetime import datetime, timedelta
 import pickle
+from ok_crypto import Cipher
 
 app = Flask(__name__)
 oauth = OAuth2Provider(app)
@@ -64,16 +65,16 @@ app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
 def register(*args, **kwargs):
     if request.method == 'POST':
         client_id = str(request.form.get('client_id'))
-        client_secret = str(request.form.get('client_secret'))
         client_callback = str(request.form.get('client_callback'))
         client = Client.get(client_id)
         if client:
             message = "Client already exists"
         else:
             message = "Client created"
+            client_secret = Cipher.get_key()
             client = Client(client_id, client_secret, [client_callback])
             client.save()
-        d = {'message': message}
+        d = {'message': message, 'key': key}
         return flask.jsonify(**d)
     return render_template('register.html')
 

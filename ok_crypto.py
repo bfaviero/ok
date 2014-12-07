@@ -12,6 +12,10 @@ class Cipher:
     blockSize = 16
 
     @staticmethod
+    def get_key():
+        return b64encode(Random.get_random_bytes(Cipher.keySize))[:Cipher.keySize]
+
+    @staticmethod
     def encrypt(text, secret):
         key = pbkdf2(secret, '').read(Cipher.keySize)
         plaintext = bytearray(text)
