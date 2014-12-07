@@ -4,7 +4,7 @@ from oauth import OAuthSignIn
 import pdb
 import CLIENT_CONFIG as CONFIG
 from OpenSSL import SSL
-
+import pickle
 
 
 app = Flask(__name__)
@@ -14,8 +14,8 @@ app.config['OAUTH_CREDENTIALS'] = {
         'secret': '76902abc26b1c5e12907792103161788'
     },
     'ok_server' : {
-        'id' : 'test_client_1',
-        'secret' : CONFIG.client_secret
+        'id' : 'max_client_2',
+        'secret' : "W6b4FSwb9J3jSo6IB+ijIXVEvqIOPLsN" #CONFIG.client_secret
     }
 }
 
@@ -40,6 +40,10 @@ def index_url():
 def authenticated():
     if 'username' not in session:
         return redirect(index_url())
+
+    s = pickle.loads(session['oauth_session'])
+    a = s.get('/ticket/AFS')
+    
 
     return render_template('authenticated.html')
 
@@ -75,10 +79,13 @@ def oauth_callback(provider):
     # login_user(user, True)
     oauth = OAuthSignIn.get_provider(provider)
     # pdb.set_rtace()
-    res = oauth.callback()
+    oauth_session = oauth.callback()
+    res = oauth_session.get('username').json()
     session['authenticated'] = True
     session['username'] = res['username']
     session['tgt'] = res['token']
+    session['oauth_session'] = pickle.dumps(oauth_session) 
+
     print 'successfully authenticated: ' + res['username']
     return redirect(authenticated_url())
 

@@ -18,9 +18,9 @@ oauth = OAuth2Provider(app)
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-services_mapping = {
-    'afs' : 'afs/athena.mit.edu@ATHENA.MIT.EDU',
-    'zephyr' : 'zephyr/athena.mit.edu@ATHENA.MIT.EDU'
+service_mappings = {
+    'AFS' : 'afs/athena.mit.edu@ATHENA.MIT.EDU',
+    'Zephyr' : 'zephyr/athena.mit.edu@ATHENA.MIT.EDU'
 }
 
 
@@ -72,12 +72,13 @@ def register(*args, **kwargs):
         client = Client.get(client_id)
         if client:
             message = "Client already exists"
+            d = {'message': message}
         else:
             message = "Client created"
             client_secret = Cipher.get_key()
-            client = Client(client_id, client_secret, [client_callback], serices)
+            client = Client(client_id, client_secret, [client_callback], services)
             client.save()
-        d = {'message': message, 'key': key}
+            d = {'message': message, 'key': client_secret}
         return flask.jsonify(**d)
     return render_template('register.html')
 
@@ -102,7 +103,7 @@ def access_token():
     return None
 
 
-@app.route('/ticket/<serice>')
+@app.route('/ticket/<service_name>')
 @oauth.require_oauth('tgt')
 def service_ticket(service_name):
     token = request.oauth.Authorization[len("Bearer "):]
@@ -111,7 +112,10 @@ def service_ticket(service_name):
     if service_name not in t.get_client().services:
         raise Exception("Token doesn't have permission to request this service")
 
-    return kerberos_client.get_service_ticket(t.tgt, service_name)
+    s = service_mappings[service_name]
+
+    return s
+    return kerberos_client.get_service_ticket(t.tgt, s)
 
 @app.route('/username')
 @oauth.require_oauth('tgt')
@@ -125,11 +129,11 @@ def username():
 def setup():
     with open(CONFIG.clients_db_file, 'w') as db:
         pickle.dump({}, db)
-    Client('test_client_1', "secret_1", ["http://localhost:5001/callback/ok_server"], ['afs', 'zephyr']).save()
+    Client('test_client_1', "secret_1", ["http://localhost:5001/callback/ok_server"], ['AFS', 'Zephyr']).save()
 
 
 if __name__ == '__main__':
-    setup()
+    # setup()
     app.debug = True
     app.run()
 
