@@ -40,6 +40,8 @@ krb5_build_principal = check_error(krb5_ctypes.krb5_build_principal)
 krb5_get_credentials = check_error(krb5_ctypes.krb5_get_credentials)
 krb5_free_creds = check_error(krb5_ctypes.krb5_free_creds)
 krb5_free_ticket = check_error(krb5_ctypes.krb5_free_ticket)
+krb5_get_init_creds_password = \
+    check_error(krb5_ctypes.krb5_get_init_creds_password)
 
 # This one is weird and takes no context. But the free function does??
 def krb5_decode_ticket(*args):
