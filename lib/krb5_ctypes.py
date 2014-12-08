@@ -19,8 +19,11 @@ krb5_timestamp = krb5_int32
 krb5_boolean = ctypes.c_uint
 krb5_addrtype = krb5_int32
 krb5_authdatatype = krb5_int32
+krb5_prompt_type = krb5_int32
 krb5_kvno = ctypes.c_uint
 
+class _krb5_get_init_creds_opt(ctypes.Structure): pass
+krb5_get_init_creds_opt = ctypes.POINTER(_krb5_get_init_creds_opt)
 class _krb5_context(ctypes.Structure): pass
 krb5_context = ctypes.POINTER(_krb5_context)
 class _krb5_ccache(ctypes.Structure): pass
@@ -33,6 +36,13 @@ class krb5_data(ctypes.Structure):
 
     def as_str(self):
         return ctypes.string_at(self.data, self.length)
+
+class _krb5_prompt(ctypes.Structure):
+    _fields_ = [('prompt', ctypes.c_char_p),
+                ('hidden', ctypes.c_int),
+                ('reply', ctypes.POINTER(krb5_data)),
+                ('type', krb5_prompt_type)]
+krb5_prompt = ctypes.POINTER(_krb5_prompt)
 
 class krb5_principal_data(ctypes.Structure):
     _fields_ = [('magic', krb5_magic),
@@ -128,18 +138,41 @@ krb5_cc_new_unique.argtypes = (krb5_context,
                               ctypes.c_char_p,
                               ctypes.POINTER(krb5_ccache))
 
-krb5_get_init_creds_password = libkrb5.krb5_get_in_tkt_with_password
+'''
+krb5_prompter_posix = libkrb5.krb5_prompter_posix
+krb5_prompter_posix.restype = krb5_error_code
+krb5_prompter_posix.argtypes = (krb5_context,
+                                ctypes.c_void_p,
+                                ctypes.c_char_p,
+                                ctypes.c_char_p,
+                                ctypes.c_int,
+                                krb5_prompt)
+'''
+
+# Function pointer type to pass in to the get_init_creds function
+krb5_prompter_fct_t = ctypes.CFUNCTYPE(krb5_error_code,
+                                krb5_context,
+                                ctypes.c_void_p,
+                                ctypes.c_char_p,
+                                ctypes.c_char_p,
+                                ctypes.c_int,
+                                krb5_prompt)
+
+krb5_get_init_creds_opt_init = libkrb5.krb5_get_init_creds_opt_init
+krb5_get_init_creds_opt_init.restype = krb5_error_code
+krb5_get_init_creds_opt_init.argtypes = (krb5_get_init_creds_opt,)
+
+krb5_get_init_creds_password = libkrb5.krb5_get_init_creds_password
 krb5_get_init_creds_password.restype = krb5_error_code
 krb5_get_init_creds_password.argtypes = (krb5_context,
                                 krb5_creds_ptr,
                                 krb5_principal,
                                 ctypes.c_char_p,
-                                krb5_prompter_fct, #XXX
-                                ctypes.POINTER(None), # void pointer?
+                                krb5_prompter_fct_t,
+                                ctypes.c_void_p,
                                 krb5_deltat,
                                 ctypes.c_char_p,
-                                ctypes.POINTER(krb5_get_init_creds_opt))
-                                ctypes.POINTER(krb5_ccache))
+                                krb5_get_init_creds_opt)
 
 
 krb5_cc_get_principal = libkrb5.krb5_cc_get_principal

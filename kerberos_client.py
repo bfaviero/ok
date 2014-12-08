@@ -14,7 +14,9 @@ import os
 import subprocess
 import lib.krb5 as krb5
 import lib.krb5_ctypes as krb5_ctypes
+from lib.krb5_ctypes import ctypes
 import lib.gss as gss
+import IPython
 
 # For testing
 def acquire_creds(realm='ATHENA.MIT.EDU', svc_name=['afs', 'athena.mit.edu']):
@@ -36,9 +38,9 @@ def get_service_ticket(userid, svc_args, tgt_creds, realm='ATHENA.MIT.EDU'):
 
     # create a new in-memory ccache to hold the credentials
     ccache = krb5.CCache(ctx)
-    krb5.krb5_cc_new_unique(ctx._handle,                # context
-            krb5_ctypes.ctypes.c_char_p('MEMORY'),      # type
-            krb5_ctypes.ctypes.c_char_p(),              # hint (blank)
+    krb5.krb5_cc_new_unique(ctx._handle,    # context
+            ctypes.c_char_p('MEMORY'),      # type
+            ctypes.c_char_p(),              # hint (blank)
             ccache._handle)
 
     # Store the tgt credentials here
@@ -68,19 +70,32 @@ def get_service_ticket(userid, svc_args, tgt_creds, realm='ATHENA.MIT.EDU'):
     return creds.to_dict()['ticket']
 
 
-# XXX Broken
+# Get a ticket-granting ticket.
 def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
     ctx = krb5.Context()
-    krb5.krb5_get_init_creds_password(ctx._handle,
-                                krb5_creds_ptr,
-                                krb5_principal,
-                                ctypes.c_char_p,
-                                None, # krb5_prompter_ftc *
-                                None, # void* prompter_data
-                                krb5_deltat,
-                                ctypes.c_char_p,
-                                ctypes.POINTER(krb5_get_init_creds_opt)
-                                ctypes.POINTER(krb5_ccache))
+    creds = krb5.Credentials(ctx)
+    principal = ctx.build_principal(realm, [userid])
+
+    # initialize the credential options
+    creds_opt = krb5_ctypes.krb5_get_init_creds_opt(krb5_ctypes._krb5_get_init_creds_opt())
+    krb5.krb5_get_init_creds_opt_init(creds_opt)
+
+    #IPython.embed()
+
+    # get the credentials by passing in our info
+    krb5.krb5_get_init_creds_password(
+                    ctx._handle,                # context
+                    creds._handle,              # credentials pointer
+                    principal._handle,          # principal struct
+                    ctypes.c_char_p(passwd),    # password string
+                    #ctypes.byref(krb5_ctypes.krb5_prompter_posix),
+                    krb5_ctypes.krb5_prompter_fct_t(lambda: 0),  # krb5_prompter_fct *
+                    None,                       # void* prompter_data
+                    krb5_ctypes.krb5_deltat(0), # start time - 0 = NOW
+                    ctypes.c_char_p('krbtgt/' + realm),  # in_tkt_service - name of TGS
+                    creds_opt)  # krb5_get_init_creds_opt
+
+    return creds
 
 
 # Get a ticket-granting ticket. This part works.
@@ -119,7 +134,7 @@ if __name__ == '__main__':
     tgt = get_tgt(uname, passwd)
     print 'TGT generation success. Ticket is as follows:'
     print
-    print tgt
+    print tgt.to_dict()
     print
     svc_ticket = get_service_ticket(uname, service, tgt)
     print
