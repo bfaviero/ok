@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 import pickle
 
 class Client():
-    def __init__(self, client_id, client_secret, _redirect_uris):
+    def __init__(self, client_id, client_secret, _redirect_uris, services=[]):
         self.client_id = client_id
         self.client_secret = client_secret
         self._redirect_uris = _redirect_uris
+        self.services = services
         self.default_scopes = ['tgt']
 
     def save(self):
@@ -20,8 +21,9 @@ class Client():
 
             clients[self.client_id] = {
                 'client_id'     : self.client_id,
-                'client_secret': self.client_secret,
-                '_redirect_uris': self._redirect_uris
+                'client_secret': Cipher.encrypt(self.client_secret, CONFIG.secret) ,
+                '_redirect_uris': self._redirect_uris,
+                'services' : self.services
             }
 
             pickle.dump(clients, db)
@@ -47,6 +49,8 @@ class Client():
             return None
 
         client = clients[client_id]
+
+        client['client_secret'] = Cipher.decrypt(client['client_secret'], CONFIG.secret)
 
         return Client(**client)
 
@@ -92,12 +96,13 @@ class Grant():
 
 
 class Token():
-    def __init__(self, tgt, client_id, user, redirect_uri, expires):
+    def __init__(self, tgt, client_id, user, redirect_uri, expires, services=[]):
         self.tgt = tgt
         self.client_id = client_id
         self.user = user
         self.redirect_uri = redirect_uri
         self.expires = expires
+        self.services = services
         self.scopes = ['tgt']
 
     def encrypt_to_string(self, secret):
@@ -106,10 +111,14 @@ class Token():
         	'client_id' : self.client_id,
             'user' : self.user,
         	'redirect_uri' : self.redirect_uri,
-            'expires' : self.expires.strftime(CONFIG.time_fmt)
+            'expires' : self.expires.strftime(CONFIG.time_fmt),
+            'services' : self.services
         	})
 
     	return Cipher.encrypt(code, secret)
+
+    def get_client(self):
+        return Client.get(self.client_id)
 
 
     @staticmethod
@@ -123,6 +132,7 @@ class Token():
         user = vals['user']
         redirect_uri = vals['redirect_uri']
     	expires = datetime.strptime( vals['expires'], CONFIG.time_fmt)
+        services = vals['services']
 
-        return Token(tgt, client_id, user, redirect_uri, expires)
+        return Token(tgt, client_id, user, redirect_uri, expires, services)
 

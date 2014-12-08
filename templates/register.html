@@ -103,9 +103,9 @@
     <h4>Register a client</h4>
     <form action="/oauth/client/register" name="form" method="post">
       <input id="client_id" class="ok-text" type="text" name="client_id" value="" placeholder="client_id"></input>
-      <input id="client_secret" class="ok-text" type="text" name="client_secret" value="" placeholder="client_secret"></input>
       <input id="client_secret" class="ok-text" type="text" name="client_callback" value="http://localhost:5001/callback/ok_server" placeholder="client_secret"></input>
-
+      <span>AFS</span>&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="service" value="AFS"><br>
+      <span>Zephyr</span><input type="checkbox" name="service" value="Zephyr"><br>
       <input class="btn btn-yes" type="submit" name="confirm" value="yes">
       <input class="btn btn-no" type="submit" name="confirm" value="no">
     </form>

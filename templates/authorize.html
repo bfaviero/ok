@@ -88,7 +88,13 @@
   <div id="title">Welcome to OK Server</div>
   </div>
   <div id="form" class="container">
-    <div id="request">{{ client.client_id }} is requesting access</div>
+    <div id="request">{{ client.client_id }} is requesting access to the following services</div>
+
+    <ul>
+      {% for s in services %}
+        <li>{{s}}</li>
+      {% endfor %}
+    <ul>
     <form action="/oauth/authorize" method="post">
       <p>Allow access?</p>
       <input type="hidden" name="client_id" value="{{ client.client_id }}">

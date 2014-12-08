@@ -3,7 +3,7 @@ import flask
 from flask import Flask
 from flask import session, request, jsonify
 from flask import render_template, redirect
-import kerberos_client
+# import kerberos_client
 from flask_oauthlib.provider import OAuth2Provider
 import logging
 from oauth_classes import Client, Grant, Token
@@ -11,15 +11,18 @@ import SERVER_CONFIG as CONFIG
 import pdb
 from datetime import datetime, timedelta
 import pickle
+from ok_crypto import Cipher
 
 app = Flask(__name__)
 oauth = OAuth2Provider(app)
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-# @app.before_request
-# def debug():
-#     pdb.set_trace()
+service_mappings = {
+    'AFS' : 'afs/athena.mit.edu@ATHENA.MIT.EDU',
+    'Zephyr' : 'zephyr/athena.mit.edu@ATHENA.MIT.EDU'
+}
+
 
 @oauth.clientgetter
 def load_client(client_id):
@@ -64,16 +67,18 @@ app.config['OAUTH2_PROVIDER_TOKEN_GENERATOR'] = tgt_token_generator
 def register(*args, **kwargs):
     if request.method == 'POST':
         client_id = str(request.form.get('client_id'))
-        client_secret = str(request.form.get('client_secret'))
         client_callback = str(request.form.get('client_callback'))
+        services = request.form.getlist('service')
         client = Client.get(client_id)
         if client:
             message = "Client already exists"
+            d = {'message': message}
         else:
             message = "Client created"
-            client = Client(client_id, client_secret, [client_callback])
+            client_secret = Cipher.get_key()
+            client = Client(client_id, client_secret, [client_callback], services)
             client.save()
-        d = {'message': message}
+            d = {'message': message, 'key': client_secret}
         return flask.jsonify(**d)
     return render_template('register.html')
 
@@ -81,12 +86,11 @@ def register(*args, **kwargs):
 @oauth.authorize_handler
 def authorize(*args, **kwargs):
     if request.method == 'GET':
-        print kwargs
         client_id = kwargs.get('client_id')
         client = Client.get(client_id)
         kwargs['client'] = client
-        print kwargs
         kwargs['username'] = request.args.get('username')
+        kwargs['services'] = client.services
         return render_template('authorize.html', **kwargs)
 
     confirm = request.form.get('confirm', 'no')
@@ -99,10 +103,19 @@ def access_token():
     return None
 
 
-@app.route('/ticket/<serice>')
+@app.route('/ticket/<service_name>')
 @oauth.require_oauth('tgt')
 def service_ticket(service_name):
-    return kerberos_client.get_service_ticket(tgt, service_name)
+    token = request.oauth.Authorization[len("Bearer "):]
+    t = Token.decrypt(token, CONFIG.secret )
+
+    if service_name not in t.get_client().services:
+        raise Exception("Token doesn't have permission to request this service")
+
+    s = service_mappings[service_name]
+
+    return s
+    return kerberos_client.get_service_ticket(t.tgt, s)
 
 @app.route('/username')
 @oauth.require_oauth('tgt')
@@ -116,11 +129,11 @@ def username():
 def setup():
     with open(CONFIG.clients_db_file, 'w') as db:
         pickle.dump({}, db)
-    Client('test_client_1', "secret_1", [CONFIG.callback_url]).save()
+    Client('test_client_1', "secret_1", ["http://localhost:5001/callback/ok_server"], ['AFS', 'Zephyr']).save()
 
 
 if __name__ == '__main__':
-    setup()
+    # setup()
     app.debug = True
     app.run()
 
