@@ -23,7 +23,7 @@ krb5_prompt_type = krb5_int32
 krb5_kvno = ctypes.c_uint
 
 class _krb5_get_init_creds_opt(ctypes.Structure): pass
-krb5_get_init_creds_opt = ctypes.POINTER(_krb5_get_init_creds_opt)
+krb5_get_init_creds_opt_ptr = ctypes.POINTER(_krb5_get_init_creds_opt)
 class _krb5_context(ctypes.Structure): pass
 krb5_context = ctypes.POINTER(_krb5_context)
 class _krb5_ccache(ctypes.Structure): pass
@@ -158,9 +158,14 @@ krb5_prompter_fct_t = ctypes.CFUNCTYPE(krb5_error_code,
                                 ctypes.c_int,
                                 krb5_prompt)
 
+krb5_get_init_creds_opt_set_forwardable = libkrb5.krb5_get_init_creds_opt_set_forwardable
+krb5_get_init_creds_opt_set_forwardable.restype = None
+krb5_get_init_creds_opt_set_forwardable.argtypes = (krb5_get_init_creds_opt_ptr,
+                                                    ctypes.c_int)
+
 krb5_get_init_creds_opt_init = libkrb5.krb5_get_init_creds_opt_init
 krb5_get_init_creds_opt_init.restype = krb5_error_code
-krb5_get_init_creds_opt_init.argtypes = (krb5_get_init_creds_opt,)
+krb5_get_init_creds_opt_init.argtypes = (krb5_get_init_creds_opt_ptr,)
 
 krb5_get_init_creds_password = libkrb5.krb5_get_init_creds_password
 krb5_get_init_creds_password.restype = krb5_error_code
@@ -172,7 +177,7 @@ krb5_get_init_creds_password.argtypes = (krb5_context,
                                 ctypes.c_void_p,
                                 krb5_deltat,
                                 ctypes.c_char_p,
-                                krb5_get_init_creds_opt)
+                                krb5_get_init_creds_opt_ptr)
 
 
 krb5_cc_get_principal = libkrb5.krb5_cc_get_principal
@@ -219,6 +224,12 @@ krb5_get_credentials.argtypes = (krb5_context,
                                  krb5_ccache,
                                  krb5_creds_ptr,
                                  ctypes.POINTER(krb5_creds_ptr))
+
+krb5_cc_store_cred = libkrb5.krb5_cc_store_cred
+krb5_cc_store_cred.restype = krb5_error_code
+krb5_cc_store_cred.argtypes = (krb5_context,
+                                 krb5_ccache,
+                                 krb5_creds_ptr)
 
 krb5_free_creds = libkrb5.krb5_free_creds
 krb5_free_creds.restype = None

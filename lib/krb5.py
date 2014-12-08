@@ -38,12 +38,16 @@ krb5_unparse_name = check_error(krb5_ctypes.krb5_unparse_name)
 krb5_free_unparsed_name = check_error(krb5_ctypes.krb5_free_unparsed_name)
 krb5_build_principal = check_error(krb5_ctypes.krb5_build_principal)
 krb5_get_credentials = check_error(krb5_ctypes.krb5_get_credentials)
+krb5_cc_store_cred = check_error(krb5_ctypes.krb5_cc_store_cred)
 krb5_free_creds = check_error(krb5_ctypes.krb5_free_creds)
 krb5_free_ticket = check_error(krb5_ctypes.krb5_free_ticket)
 krb5_get_init_creds_opt_init = \
     check_error(krb5_ctypes.krb5_get_init_creds_opt_init)
 krb5_get_init_creds_password = \
     check_error(krb5_ctypes.krb5_get_init_creds_password)
+krb5_get_init_creds_opt_set_forwardable = \
+    check_error(krb5_ctypes.krb5_get_init_creds_opt_set_forwardable)
+
 
 # This one is weird and takes no context. But the free function does??
 def krb5_decode_ticket(*args):
@@ -208,6 +212,12 @@ class Credentials(object):
             'nameString': [server_data.data[i].as_str()
                            for i in xrange(server_data.length)],
             }
+
+        return ret
+
+        # TODO(cyphers): figure out why we would want the part below, and why it
+        # throws a floating point exception.
+
         addrs = []
         i = 0
         while bool(self._handle.contents.addresses[i]):
