@@ -58,9 +58,9 @@ class OKServerSignIn(OAuthSignIn):
                   'grant_type': 'authorization_code',
                   'redirect_uri': self.get_callback_url()},
             decoder=json.loads
-        )
-        username = oauth_session.get('username').json()
-        return username
+        )        
+        
+        return oauth_session
 
 
 
