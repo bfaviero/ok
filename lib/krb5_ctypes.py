@@ -21,21 +21,34 @@ krb5_addrtype = krb5_int32
 krb5_authdatatype = krb5_int32
 krb5_prompt_type = krb5_int32
 krb5_kvno = ctypes.c_uint
+krb5_ui_4 = ctypes.c_uint32
+char_p = ctypes.c_char_p
+size_t = ctypes.c_size_t
 
 class _krb5_get_init_creds_opt(ctypes.Structure): pass
 krb5_get_init_creds_opt_ptr = ctypes.POINTER(_krb5_get_init_creds_opt)
 class _krb5_context(ctypes.Structure): pass
 krb5_context = ctypes.POINTER(_krb5_context)
+
 class _krb5_ccache(ctypes.Structure): pass
 krb5_ccache = ctypes.POINTER(_krb5_ccache)
 
+class _krb5_auth_context(ctypes.Structure): pass
+krb5_auth_context = ctypes.POINTER(_krb5_auth_context)
+
 class krb5_data(ctypes.Structure):
+
     _fields_ = [('magic', krb5_magic),
                 ('length', ctypes.c_uint),
                 ('data', ctypes.POINTER(ctypes.c_char))]
 
     def as_str(self):
         return ctypes.string_at(self.data, self.length)
+
+class krb5_replay_data(ctypes.Structure):
+	_fields_ = [('timestamp', krb5_timestamp),
+		    ('usec', krb5_int32),
+		    ('seq', krb5_ui_4)]
 
 class _krb5_prompt(ctypes.Structure):
     _fields_ = [('prompt', ctypes.c_char_p),
@@ -100,6 +113,8 @@ class krb5_enc_data(ctypes.Structure):
                 ('enctype', krb5_enctype),
                 ('kvno', krb5_kvno),
                 ('ciphertext', krb5_data)]
+
+
 
 # Transcribe this later if we ever care about it.
 class krb5_enc_tkt_part(ctypes.Structure): pass
@@ -243,3 +258,73 @@ krb5_decode_ticket.argtypes = (ctypes.POINTER(krb5_data),
 krb5_free_ticket = libkrb5.krb5_free_ticket
 krb5_free_ticket.restype = None
 krb5_free_ticket.argtypes = (krb5_context, krb5_ticket_ptr)
+
+krb5_mk_1cred = libkrb5.krb5_mk_1cred
+krb5_mk_1cred.restype = krb5_error_code
+krb5_mk_1cred.argtypes = (krb5_context,
+			  krb5_auth_context,
+			  ctypes.POINTER(krb5_creds),
+			  ctypes.POINTER(ctypes.POINTER(krb5_data)),
+			  ctypes.POINTER(krb5_replay_data))
+
+krb5_rd_cred = libkrb5.krb5_rd_cred
+krb5_rd_cred.restype = krb5_error_code
+krb5_rd_cred.argtypes = (krb5_context,
+			 krb5_auth_context,
+			 ctypes.POINTER(krb5_data),
+			 ctypes.POINTER(ctypes.POINTER(ctypes.POINTER(krb5_creds))),
+			 ctypes.POINTER(krb5_replay_data))
+
+krb5_init_keyblock = libkrb5.krb5_init_keyblock
+krb5_init_keyblock.restype = krb5_error_code
+krb5_init_keyblock.argtypes = (krb5_context, krb5_enctype, size_t,
+			       ctypes.POINTER(ctypes.POINTER(krb5_keyblock)))
+
+krb5_auth_con_setsendsubkey = libkrb5.krb5_auth_con_setsendsubkey
+krb5_auth_con_setsendsubkey.restype = krb5_error_code
+krb5_auth_con_setsendsubkey.argtypes = (krb5_context, krb5_auth_context,
+					ctypes.POINTER(krb5_keyblock))
+
+krb5_auth_con_setrecvsubkey = libkrb5.krb5_auth_con_setrecvsubkey
+krb5_auth_con_setrecvsubkey.restype = krb5_error_code
+krb5_auth_con_setrecvsubkey.argtypes = (krb5_context, krb5_auth_context,
+					ctypes.POINTER(krb5_keyblock))
+
+krb5_free_keyblock_contents = libkrb5.krb5_free_keyblock_contents
+krb5_free_keyblock_contents.restype = None
+krb5_free_keyblock_contents.argtypes = (krb5_context, ctypes.POINTER(krb5_keyblock))
+
+krb5_auth_con_setflags = libkrb5.krb5_auth_con_setflags
+krb5_auth_con_setflags.restype = krb5_error_code
+krb5_auth_con_setflags.argtypes = (krb5_context, krb5_auth_context, krb5_int32)
+
+krb5_auth_con_init = libkrb5.krb5_auth_con_init
+krb5_auth_con_init.restype = krb5_error_code
+krb5_auth_con_init.argtypes = (krb5_context, ctypes.POINTER(krb5_auth_context))
+
+krb5_auth_con_free = libkrb5.krb5_auth_con_free
+krb5_auth_con_free.restype = krb5_error_code
+krb5_auth_con_free.argtypes = (krb5_context, krb5_auth_context)
+
+krb5_string_to_enctype = libkrb5.krb5_string_to_enctype
+krb5_string_to_enctype.restype = krb5_error_code
+krb5_string_to_enctype.argtypes = (char_p, ctypes.POINTER(krb5_enctype))
+
+krb5_c_string_to_key = libkrb5.krb5_c_string_to_key
+krb5_c_string_to_key.restype = krb5_error_code
+krb5_c_string_to_key.argtypes = (krb5_context, krb5_enctype, ctypes.POINTER(krb5_data),
+				 ctypes.POINTER(krb5_data), ctypes.POINTER(krb5_keyblock))
+
+
+krb5_free_data = libkrb5.krb5_free_data
+krb5_free_data.restype = None
+krb5_free_data.argtypes = (krb5_context, ctypes.POINTER(krb5_data))
+
+krb5_free_tgt_creds = libkrb5.krb5_free_tgt_creds
+krb5_free_tgt_creds.restype = None
+krb5_free_tgt_creds.argtypes = (krb5_context, ctypes.POINTER(ctypes.POINTER(krb5_creds)))
+
+krb5_copy_creds = libkrb5.krb5_copy_creds
+krb5_copy_creds.restype = krb5_error_code
+krb5_copy_creds.argtypes = (krb5_context, ctypes.POINTER(krb5_creds),
+			    ctypes.POINTER(ctypes.POINTER(krb5_creds)))
