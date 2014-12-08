@@ -1,38 +1,14 @@
-from flask import Flask
-from subprocess import Popen, PIPE
-import base64
-import json
-import pycurl
-import StringIO
 import sys
 import getpass
-from flask import Flask
-from subprocess import Popen, PIPE
-from base64 import urlsafe_b64encode, urlsafe_b64decode
-# import gssapi
-import os
-import subprocess
 import lib.krb5 as krb5
 import lib.krb5_ctypes as krb5_ctypes
 import ctypes
-import lib.gss as gss
 import binascii
 import ctypes
 import IPython
-
-
-# For testing
-def acquire_creds(realm='ATHENA.MIT.EDU', svc_name=['afs', 'athena.mit.edu']):
-    # Get a context, and load the credential cache.
-    ctx = krb5.Context()
-    ccache = ctx.cc_default()
-
-    # Get principal names.
-    principal = ccache.get_principal()
-
-    service = ctx.build_principal(realm, svc_name)
-    creds = ccache.get_credentials(principal, service)
-    return creds
+import base64
+import json
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 
 
 # Get a ticket for a specific service.
@@ -84,6 +60,7 @@ def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
             krb5_ctypes._krb5_get_init_creds_opt())
     krb5.krb5_get_init_creds_opt_init(creds_opt)
 
+    # make the ticket forwardable
     krb5.krb5_get_init_creds_opt_set_forwardable(creds_opt, ctypes.c_int(1))
 
     # get the credentials by passing in our info
@@ -92,14 +69,11 @@ def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
                     creds._handle,                  # credentials pointer
                     principal._handle.contents,     # principal struct
                     ctypes.c_char_p(passwd),        # password string
-                    #ctypes.byref(krb5_ctypes.krb5_prompter_posix), # krb5_prompter_fct*
                     krb5_ctypes.krb5_prompter_fct_t(lambda: 0),  # krb5_prompter_fct*
                     None,                           # void* prompter_data
-                    #ctypes.c_void_p(),             # void* prompter_data
                     krb5_ctypes.krb5_deltat(0),     # start time: 0 == NOW
-                    None,                                 # in_tkt_service - name of TGS
-                    #ctypes.c_char_p('krbtgt/' + realm),  # in_tkt_service - name of TGS
-                    creds_opt)  # krb5_get_init_creds_opt_ptr
+                    None,                           # in_tkt_service - name of TGS
+                    creds_opt)                      # krb5_get_init_creds_opt_ptr
 
     return creds
 
