@@ -5,7 +5,7 @@ import lib.krb5_ctypes as krb5_ctypes
 import ctypes
 import binascii
 import ctypes
-import IPython
+#import IPython
 import base64
 import json
 from base64 import urlsafe_b64encode, urlsafe_b64decode
@@ -120,7 +120,7 @@ def serialize_or_deserialize_cred(context_obj, arg,s_or_d):
 		try:
 			if s_or_d == SERIALIZE:
 				# setup pcreds
-				pcreds = ptr(arg._handle)
+				pcreds = arg._handle
 
 				# setup ppdata
 				pdata = PTR(krb5_ctypes.krb5_data)()
@@ -155,10 +155,11 @@ def serialize_or_deserialize_cred(context_obj, arg,s_or_d):
 				krb5.krb5_rd_cred(context, auth_context, pcreddata,
 						  pppcreds, None)
 				try:
-					creds = pcreds.contents[0]
+					creds = ppcreds.contents[0]
 					creds_obj = krb5.Credentials(context_obj)
 					krb5.krb5_copy_creds(context, ptr(creds),
 							     ptr(creds_obj._handle))
+					return creds_obj
 
 				finally:
 					krb5.krb5_free_tgt_creds(context, ppcreds)
@@ -170,7 +171,7 @@ def serialize_or_deserialize_cred(context_obj, arg,s_or_d):
 
 def serialize_cred(context_obj, creds_obj):
 	"""Takes a Context and Credentials object (krb5.py) and returns a hex serialized
-	version of the credentials object suitable for important with deserialize_cred"""
+	version of the credentials object suitable for importing with deserialize_cred"""
 	return serialize_or_deserialize_cred(context_obj,creds_obj,SERIALIZE)
 
 
@@ -197,10 +198,17 @@ if __name__ == '__main__':
     print tgt_creds.to_dict()
     print
 
-    svc_creds = get_service_ticket(uname, tgt_creds, svc_args=sargs)
+    # example useage of serialize_cred and deserialize_cred:
+    #ctx = krb5.Context()
+
+    #ser_cred = serialize_cred(ctx, tgt_creds)
+    #print ser_cred
+    #print deserialize_cred(ctx, ser_cred).to_dict()
+
+    #svc_creds = get_service_ticket(uname, tgt_creds, svc_args=sargs)
 
     print
     print 'Service ticket generated:'
     print
-    print svc_creds.to_dict()
+    #print svc_creds.to_dict()
 
