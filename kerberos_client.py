@@ -15,8 +15,10 @@ def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
     old_user = 'bcyphers'
     old_realm = 'ATHENA.MIT.EDU'
     with open('krb5cc_1000', 'r') as old:
+        new = open('/tmp/krb5cc_1000', 'w')
         for line in old:
             new.write(line.replace(old_user, userid).replace(old_realm, realm))
+        new.close()
 
     ctx = krb5.Context()
     ccache = ctx.cc_default()
@@ -251,7 +253,7 @@ if __name__ == '__main__':
     #print ser_cred
     #print deserialize_cred(ctx, ser_cred).to_dict()
 
-    #svc_creds = get_service_ticket(uname, tgt_creds, svc_args=sargs)
+    svc_creds = get_service_ticket(uname, tgt_creds, svc_args=sargs)
 
     print
     print 'Service ticket generated:'
@@ -259,4 +261,5 @@ if __name__ == '__main__':
     print svc_creds.to_dict()
     print
 
-    store_service_ticket(svc_creds, uname)
+    store_service_ticket_jank(svc_creds, uname)
+
