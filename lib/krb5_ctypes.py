@@ -20,6 +20,7 @@ krb5_boolean = ctypes.c_uint
 krb5_addrtype = krb5_int32
 krb5_authdatatype = krb5_int32
 krb5_prompt_type = krb5_int32
+krb5_pointer = ctypes.c_void_p
 krb5_kvno = ctypes.c_uint
 krb5_ui_4 = ctypes.c_uint32
 char_p = ctypes.c_char_p
@@ -27,23 +28,27 @@ size_t = ctypes.c_size_t
 
 class _krb5_get_init_creds_opt(ctypes.Structure): pass
 krb5_get_init_creds_opt_ptr = ctypes.POINTER(_krb5_get_init_creds_opt)
+
 class _krb5_context(ctypes.Structure): pass
 krb5_context = ctypes.POINTER(_krb5_context)
 
-class _krb5_ccache(ctypes.Structure): pass
-krb5_ccache = ctypes.POINTER(_krb5_ccache)
+class _krb5_cc_ops(ctypes.Structure): pass
 
 class _krb5_auth_context(ctypes.Structure): pass
 krb5_auth_context = ctypes.POINTER(_krb5_auth_context)
 
 class krb5_data(ctypes.Structure):
-
     _fields_ = [('magic', krb5_magic),
                 ('length', ctypes.c_uint),
                 ('data', ctypes.POINTER(ctypes.c_char))]
 
     def as_str(self):
         return ctypes.string_at(self.data, self.length)
+
+class _krb5_ccache(ctypes.Structure):
+    _fields_ = [('data', krb5_pointer),
+                ('ops', ctypes.POINTER(_krb5_cc_ops))]
+krb5_ccache = ctypes.POINTER(_krb5_ccache)
 
 class krb5_replay_data(ctypes.Structure):
 	_fields_ = [('timestamp', krb5_timestamp),
@@ -145,6 +150,10 @@ krb5_cc_default.argtypes = (krb5_context, ctypes.POINTER(krb5_ccache))
 krb5_cc_close = libkrb5.krb5_cc_close
 krb5_cc_close.restype = krb5_error_code
 krb5_cc_close.argtypes = (krb5_context, krb5_ccache)
+
+krb5_cc_initialize = libkrb5.krb5_cc_initialize
+krb5_cc_initialize.restype = krb5_error_code
+krb5_cc_initialize.argtypes = (krb5_context, krb5_ccache, krb5_principal_data)
 
 krb5_cc_new_unique = libkrb5.krb5_cc_new_unique
 krb5_cc_new_unique.restype = krb5_error_code

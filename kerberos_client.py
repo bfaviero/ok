@@ -1,4 +1,5 @@
 import sys
+import shutil
 import getpass
 import lib.krb5 as krb5
 import lib.krb5_ctypes as krb5_ctypes
@@ -9,6 +10,51 @@ import IPython
 import base64
 import json
 from base64 import urlsafe_b64encode, urlsafe_b64decode
+
+def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
+    old_user = 'bcyphers'
+    old_realm = 'ATHENA.MIT.EDU'
+    with open('krb5cc_1000', 'r') as old:
+        for line in old:
+            new.write(line.replace(old_user, userid).replace(old_realm, realm))
+
+    ctx = krb5.Context()
+    ccache = ctx.cc_default()
+
+    principal_ptr = krb5_ctypes.krb5_principal(
+                        krb5_ctypes.krb5_principal_data())
+
+    krb5.krb5_cc_store_cred(ctx._handle, ccache._handle.contents,
+                            creds._handle)
+
+def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
+    ctx = krb5.Context()
+    ccache = ctx.cc_default()
+
+    principal_ptr = krb5_ctypes.krb5_principal(
+                        krb5_ctypes.krb5_principal_data())
+
+    print 'building principal:',
+    krb5.krb5_build_principal(ctx._handle,
+                         principal_ptr,
+                         len(realm),
+                         ctypes.c_char_p(realm),
+                         ctypes.c_char_p(userid),
+                         None)
+
+    print principal_ptr.contents
+    print 'building ccache'
+
+    ccache_ptr = krb5_ctypes.krb5_ccache(krb5_ctypes._krb5_ccache())
+
+    print 'initializing ccache'
+    krb5.krb5_cc_initialize(ctx._handle, ccache_ptr, principal_ptr.contents)
+    ccache._handle = ccache_ptr
+
+    print 'storing creds'
+
+    krb5.krb5_cc_store_cred(ctx._handle, ccache._handle.contents,
+                            creds._handle)
 
 
 # Get a ticket for a specific service.
@@ -203,4 +249,7 @@ if __name__ == '__main__':
     print 'Service ticket generated:'
     print
     print svc_creds.to_dict()
+    print
+
+    store_service_ticket(svc_creds, uname)
 
