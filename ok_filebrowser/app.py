@@ -40,11 +40,11 @@ def connector():
     user = session['username']
     root = '/afs/athena.mit.edu/user/%s/%s/%s' % (user[0], user[1], user)
 
+    print 'getting ticket'
     kerberos_client.store_service_ticket(session['afs_ticket'], user)
+    print 'aquired ticket'
     output = Popen(["aklog"], stdout=PIPE).communicate()[0]
-
-    import pdb
-    pdb.set_trace()
+    print 'token aquired'
 
     opts = {''
     ## required options

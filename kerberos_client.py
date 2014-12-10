@@ -11,6 +11,7 @@ import json
 import gc
 #import IPython
 from kerberos_serializer import *
+import os
 
 gc.disable()
 CC_PATH = '/tmp/krb5cc_1000'
