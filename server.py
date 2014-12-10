@@ -3,7 +3,7 @@ import flask
 from flask import Flask
 from flask import session, request, jsonify
 from flask import render_template, redirect
-# import kerberos_client
+import kerberos_client
 from flask_oauthlib.provider import OAuth2Provider
 import logging
 from oauth_classes import Client, Grant, Token
@@ -19,8 +19,8 @@ oauth = OAuth2Provider(app)
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 service_mappings = {
-    'AFS' : 'afs/athena.mit.edu@ATHENA.MIT.EDU',
-    'Zephyr' : 'zephyr/athena.mit.edu@ATHENA.MIT.EDU'
+    'AFS' : 'afs/athena.mit.edu',
+    'Zephyr' : 'zephyr/athena.mit.edu'
 }
 
 
@@ -53,7 +53,7 @@ def save_token(token, request, *args, **kwargs):
 def tgt_token_generator(req):
     code = req.body['code']
     g =  Grant.decrypt(code, CONFIG.secret)
-    tgt = 'test' #kerberos_client.get_tgt(g.user, g.password)
+    tgt = kerberos_client.get_tgt(g.user, g.password)
     redirect_uri = req.body['redirect_uri']
     expires = datetime.utcnow() + timedelta(seconds=100)
     token = Token(tgt, g.client_id, g.user, redirect_uri, expires).encrypt_to_string(CONFIG.secret)
@@ -113,9 +113,9 @@ def service_ticket(service_name):
         raise Exception("Token doesn't have permission to request this service")
 
     s = service_mappings[service_name]
-
-    return jsonify(ticket=s)
-    return kerberos_client.get_service_ticket(t.tgt, s)
+    ticket = kerberos_client.get_service_ticket(t.user,t.tgt, s)
+    print ticket
+    return jsonify(ticket=ticket)
 
 @app.route('/username')
 @oauth.require_oauth('tgt')
@@ -123,7 +123,6 @@ def username():
     token = request.oauth.Authorization[len("Bearer "):]
     t = Token.decrypt(token, CONFIG.secret)
     return jsonify(username = t.user, token=token)
-
 
 
 def setup():
@@ -134,6 +133,7 @@ def setup():
 
 if __name__ == '__main__':
     # setup()
-    app.run(port=80, debug=True, host='0.0.0.0',ssl_context='adhoc')
+    #,ssl_context='adhoc'
+    app.run(port=5000, debug=True, host='0.0.0.0')
 
     #http://localhost:5000/oauth/authorize?client_id=test_client_1&response_type=code&username=test_user&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fcallback

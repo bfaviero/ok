@@ -8,6 +8,14 @@ from OpenSSL import SSL
 import cgi
 import json
 import elFinder
+from subprocess import Popen, PIPE
+
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir) 
+print parentdir
+import kerberos_client
 
 app = Flask(__name__)
 app.config['OAUTH_CREDENTIALS'] = {
@@ -29,9 +37,11 @@ def connector():
     user = session['username']
     root = '/afs/athena.mit.edu/user/%s/%s/%s' % (user[0], user[1], user)
 
-    print root
+    kerberos_client.store_service_ticket_jank(session['afs_ticket'], user)
+    output = Popen(["aklog"], stdout=PIPE).communicate()[0]
 
-    # kerberos_client.store_service_ticket_jank(session['afs_ticket'])
+    import pdb
+    pdb.set_trace()
 
     opts = {''
     ## required options
@@ -112,8 +122,6 @@ def authenticated():
     if 'afs_ticket' not in session:
         return redirect(url_for('index'))
 
-
-
     return render_template('filebrowser.html')
 
 @app.route('/logout')
@@ -131,6 +139,7 @@ def oauth_authorize(provider):
 @app.route('/callback/<provider>')
 def oauth_callback(provider):
     oauth = OAuthSignIn.get_provider(provider)
+
     oauth_session = oauth.callback()
     res = oauth_session.get('username').json()
     session['authenticated'] = True
@@ -138,11 +147,13 @@ def oauth_callback(provider):
     session['tgt'] = res['token']
     session['afs_ticket'] = oauth_session.get('/ticket/AFS').json()["ticket"]
 
+    print session['afs_ticket']
+
     return redirect(url_for('authenticated'))
 
 
 if __name__ == '__main__':
     # db.create_all()
     app.secret_key = CONFIG.secret_key
-    # context = SSL.Context(SSL.PROTOCOL_TLSv1_2)
-    app.run(port=5001, debug=True, host='0.0.0.0', ssl_context='adhoc')
+    # , ssl_context='adhoc'
+    app.run(port=5001, debug=True, host='0.0.0.0')

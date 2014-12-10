@@ -9,6 +9,7 @@
         {% endfor %}
         {% if session.authenticated %}
             <h2>Hi, {{ session.username }}!</h2>
+            <a href="/logout">Logout</a>
         {% else %}
             <h2>I don't know you!</h2>
             <p><a href="{{ url_for('oauth_authorize', provider='ok_server') }}">Login with OK Server</a></p>
