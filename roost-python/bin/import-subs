@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+
+import optparse
+import os.path
+import sys
+
+sys.path.insert(0, os.path.join(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+        'lib'))
+import krb5
+import roost
+
+def macro_sub(s, sender):
+    if s == '%me%':
+        return sender
+    return s
+
+def parse_subsfile(path, sender):
+    # Modelled after zwgc's parser.
+    with open(path) as f:
+        ret = []
+        for line in f:
+            idx = line.find('#')
+            if idx >= 0:
+                line = line[:idx]
+            line = line.strip(' \n')
+            # Skip blank lines.
+            if not line:
+                continue
+            klass, inst, recip = line.split(',', 2)
+            # Punt punts and unsubs.
+            if klass and klass[0] in ('!', '-'):
+                continue
+            # Eh. Let's do all of them, like zwgc does.
+            klass = macro_sub(klass, sender)
+            inst = macro_sub(inst, sender)
+            recip = macro_sub(recip, sender)
+            # This is normally done in ZSubscribeTo, but roost won't
+            # allow it:
+            if recip and recip[0] == '*':
+                recip = recip[1:]
+            ret.append((klass, inst, recip))
+        return ret
+
+def zuser_is_personal(recip):
+    return recip and recip[0] != '@'
+
+def main(args):
+    parser = optparse.OptionParser(
+        usage='Usage: %prog [OPTIONS] [FILES]')
+    parser.add_option('--server', default=roost.DEFAULT_SERVER,
+                      help='Roost backend server (default: %default)')
+    parser.add_option('--service', default=roost.DEFAULT_SERVICE,
+                      help='Service name (default: %default)')
+    (options, args) = parser.parse_args()
+
+    # Get the default principal.
+    ctx = krb5.Context()
+    ccache = ctx.cc_default()
+    principal = ccache.get_principal()
+    principal_str = principal.unparse_name()
+
+    # Parse out the subs files.
+    args = args or [os.path.expanduser('~/.zephyr.subs')]
+    all_subs = []
+    for arg in args:
+        all_subs.extend(parse_subsfile(arg, principal_str))
+
+    good_subs = []
+    for sub in all_subs:
+        if zuser_is_personal(sub[2]) and sub[2] != principal_str:
+            print 'Skipping <%s,%s,%s>; bad triple' % sub
+        else:
+            good_subs.append(sub)
+
+    # Alway staple zephyr creds.
+    zephyr = ctx.build_principal('ATHENA.MIT.EDU', ['zephyr', 'zephyr'])
+    creds = ccache.get_credentials(principal, zephyr)
+
+    # Confirm.
+    print 'About to upload %d subscriptions to %s along with' % (len(good_subs),
+                                                                 options.server)
+    print 'a copy of your %s ticket.' % (zephyr.unparse_name(),)
+    print
+    print 'This will allow Roost to send and receive zephyrgrams on your behalf.'
+    print
+    print 'Press Enter to confirm, Ctrl-C to cancel.'
+    raw_input()
+
+    # Build the data.
+    data = {
+        'subscriptions': [{ 'class': s[0],
+                            'instance': s[1],
+                            'recipient': s[2] }
+                          for s in good_subs],
+        'credentials': creds.to_dict(),
+    }
+
+    # Get an auth token.
+    token, _expires = roost.get_auth_token(options, principal_str,
+                                           create_user=True)
+    # And subscribe.
+    roost.post(options, token, '/v1/subscribe', data)
+
+    print 'Subscribed'
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
