@@ -145,4 +145,4 @@ if __name__ == '__main__':
     # db.create_all()
     app.secret_key = CONFIG.secret_key
     # context = SSL.Context(SSL.PROTOCOL_TLSv1_2)
-    app.run(port=5001, debug=True, host='0.0.0.0')
+    app.run(port=5001, debug=True, host='0.0.0.0', ssl_context='adhoc')
