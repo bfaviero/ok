@@ -158,7 +158,7 @@ krb5_cc_get_name.argtypes = (krb5_context, krb5_ccache)
 
 krb5_cc_initialize = libkrb5.krb5_cc_initialize
 krb5_cc_initialize.restype = krb5_error_code
-krb5_cc_initialize.argtypes = (krb5_context, krb5_ccache, krb5_principal_data)
+krb5_cc_initialize.argtypes = (krb5_context, krb5_ccache, krb5_principal)
 
 krb5_cc_new_unique = libkrb5.krb5_cc_new_unique
 krb5_cc_new_unique.restype = krb5_error_code

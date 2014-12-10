@@ -75,11 +75,11 @@ def register(*args, **kwargs):
             message = "Client already exists"
             d = {'message': message}
         else:
-            message = "Client created"
             client_secret = Cipher.get_key()
             client = Client(client_id, client_secret, [client_callback], services)
             client.save()
-            d = {'message': message, 'key': client_secret}
+            message = "Client created. Please save your key: %s" % client_secret
+            d = {'message': message}
         return flask.jsonify(**d)
     return render_template('register.html')
 
@@ -94,8 +94,8 @@ def authorize(*args, **kwargs):
         kwargs['services'] = client.services
         return render_template('authorize.html', **kwargs)
 
-    confirm = request.form.get('confirm', 'no')
-    return confirm == 'yes'
+    confirm = request.form.get('confirm', 'Reject')
+    return confirm == 'Allow'
 
 
 @app.route('/oauth/token', methods=['POST'])

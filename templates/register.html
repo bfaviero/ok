@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="{{url_for('static', filename='css/standardize.css')}}">
   <link rel="stylesheet" href="{{url_for('static', filename='css/register-grid.css')}}">
   <link rel="stylesheet" href="{{url_for('static', filename='css/register.css')}}">
+  <script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
 </head>
 <body class="body page-request-access clearfix">
   <div id="frame" class="container frame clearfix">
@@ -17,7 +18,7 @@
     <p id="headerText" class="text headertext">OAuth-Kerberos</p>
     <div id="banner" class="container banner clearfix">
       <div id="bannerBackground" class="element bannerbackground"></div>
-      <p id="headerText" class="text bannertext">Please enter a client ID and callback URL</p>
+      <p id="bannerText" class="text bannertext">Please enter a client ID and callback URL</p>
     </div>
   </div>
   <div id="form" class="container bodywrapper clearfix">
@@ -43,6 +44,7 @@
   <script>
   $(document).ready(function() {
     $('input[name="client_id"]').focus();
+    $('#banner').hide()
     var frm = $('#form');
     frm.submit(function (ev) {
         var inputs = $('input').serializeArray();
@@ -63,10 +65,10 @@
         ev.preventDefault();
     });
     function showMessage(message, seconds) {
-      $('#banner').text(message);
-      $('#banner').slideDown(function() {
+      $('#bannerText').text(message);
+      $('#banner').show(function() {
           setTimeout(function() {
-              $('#banner').slideUp();
+              $('#banner').hide();
           }, 1000 * seconds);
       });
     }
