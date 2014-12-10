@@ -94,8 +94,8 @@ def authorize(*args, **kwargs):
         kwargs['services'] = client.services
         return render_template('authorize.html', **kwargs)
 
-    confirm = request.form.get('confirm', 'no')
-    return confirm == 'yes'
+    confirm = request.form.get('confirm', 'Reject')
+    return confirm == 'Allow'
 
 
 @app.route('/oauth/token', methods=['POST'])
