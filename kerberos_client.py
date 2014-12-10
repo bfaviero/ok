@@ -16,7 +16,7 @@ gc.disable()
 CC_PATH = '/tmp/krb5cc_1000'
 
 # Delete the default cache
-def clear_service_ticket_jank():
+def clear_service_ticket():
     os.remove(CC_PATH)
 
 
@@ -47,17 +47,10 @@ def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
 
 # Store a service ticket in a private ccache for the specified user
 def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
-    ## create the user's principal
-    #principal_ptr = krb5_ctypes.krb5_principal(
-                        #krb5_ctypes.krb5_principal_data())
-    #krb5.krb5_build_principal(ctx._handle,
-                         #principal_ptr,
-                         #len(realm),
-                         #ctypes.c_char_p(realm),
-                         #ctypes.c_char_p(userid),
-                         #None)
-
+    # init context and principal
     ctx = krb5.Context()
+    p = ctx.build_principal(realm, [userid])
+
     # unpack the creds object
     creds = deserialize_cred(ctx, creds)
 
@@ -68,11 +61,15 @@ def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
     krb5.krb5_cc_new_unique(ctx._handle.contents, ctypes.c_char_p('FILE'),
                             None, ccache_ptr)
 
+    # initialize the kerberos cache
+    krb5.krb5_cc_initialize(ctx._handle, ccache_ptr.contents,
+                            p._handle.contents)
+
     krb5.krb5_cc_store_cred(ctx._handle, ccache_ptr.contents, creds._handle)
     ccache._handle = ccache_ptr
 
     # return the name of the ccache
-    return str(krb5.krb5_cc_get_name(ctx._handle, ccache_ptr))
+    shutil.move(str(krb5.krb5_cc_get_name(ctx._handle, ccache_ptr)), CC_PATH)
 
 
 # Get a ticket for a specific service.
@@ -165,4 +162,4 @@ if __name__ == '__main__':
     print svc_creds
     print
 
-    print store_service_ticket(svc_creds, uname)
+    store_service_ticket(svc_creds, uname)
