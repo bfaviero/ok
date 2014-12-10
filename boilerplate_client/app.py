@@ -60,4 +60,4 @@ if __name__ == '__main__':
     #context.use_privatekey_file('ssl.key')
     #context.use_certificate_file('ssl.crt')
     #app.run(port=5001, debug=True, host='0.0.0.0', ssl_context=context)
-    app.run(port=5001, debug=True, host='0.0.0.0',ssl_context=context)
+    app.run(port=5001, debug=True, host='0.0.0.0',ssl_context='adhoc')
