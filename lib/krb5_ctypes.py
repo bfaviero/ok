@@ -152,6 +152,10 @@ krb5_cc_close = libkrb5.krb5_cc_close
 krb5_cc_close.restype = krb5_error_code
 krb5_cc_close.argtypes = (krb5_context, krb5_ccache)
 
+krb5_cc_get_name = libkrb5.krb5_cc_get_name
+krb5_cc_get_name.restype = ctypes.c_char_p
+krb5_cc_get_name.argtypes = (krb5_context, krb5_ccache)
+
 krb5_cc_initialize = libkrb5.krb5_cc_initialize
 krb5_cc_initialize.restype = krb5_error_code
 krb5_cc_initialize.argtypes = (krb5_context, krb5_ccache, krb5_principal_data)

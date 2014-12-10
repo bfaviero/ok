@@ -30,8 +30,8 @@ def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
 
     old = open('krb5cc_1000', 'r')
     new = open(CC_PATH, 'w')
-    for line in old:
-        new.write(line.replace(old_user, userid).replace(old_realm, realm))
+    data = old.read()
+    new.write(data.replace(old_user, 'bruno').replace(old_realm, realm))
     old.close()
     new.close()
 
@@ -46,40 +46,33 @@ def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
 
 
 # Store a service ticket in a private ccache for the specified user
-# This is throwing segfaults; should find out why
 def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
+    ## create the user's principal
+    #principal_ptr = krb5_ctypes.krb5_principal(
+                        #krb5_ctypes.krb5_principal_data())
+    #krb5.krb5_build_principal(ctx._handle,
+                         #principal_ptr,
+                         #len(realm),
+                         #ctypes.c_char_p(realm),
+                         #ctypes.c_char_p(userid),
+                         #None)
+
     ctx = krb5.Context()
-    ccache = ctx.cc_default()
+    # unpack the creds object
+    creds = deserialize_cred(ctx, creds)
 
-    principal_ptr = krb5_ctypes.krb5_principal(
-                        krb5_ctypes.krb5_principal_data())
-
-    print 'building principal:',
-    krb5.krb5_build_principal(ctx._handle,
-                         principal_ptr,
-                         len(realm),
-                         ctypes.c_char_p(realm),
-                         ctypes.c_char_p(userid),
-                         None)
-
-    print principal_ptr.contents
-    print 'building ccache'
-
+    ccache = krb5.CCache(ctx)
     ccache_ptr = krb5_ctypes.krb5_ccache(krb5_ctypes._krb5_ccache())
 
-    print 'initializing ccache'
-    cc = ccache_ptr.contents
-    cc.data = krb5_ctypes.krb5_pointer(ctypes.byref(krb5_ctypes.krb5_data()))
-    for field_name, field_type in cc._fields_:
-        print field_name, getattr(cc, field_name)
+    # c function to allocate the cache
+    krb5.krb5_cc_new_unique(ctx._handle.contents, ctypes.c_char_p('FILE'),
+                            None, ccache_ptr)
 
-    krb5.krb5_cc_initialize(ctx._handle, ccache_ptr, principal_ptr.contents)
+    krb5.krb5_cc_store_cred(ctx._handle, ccache_ptr.contents, creds._handle)
     ccache._handle = ccache_ptr
 
-    print 'storing creds'
-
-    krb5.krb5_cc_store_cred(ctx._handle, ccache._handle.contents,
-                            creds._handle)
+    # return the name of the ccache
+    return str(krb5.krb5_cc_get_name(ctx._handle, ccache_ptr))
 
 
 # Get a ticket for a specific service.
@@ -172,4 +165,4 @@ if __name__ == '__main__':
     print svc_creds
     print
 
-    store_service_ticket_jank(svc_creds, uname)
+    print store_service_ticket(svc_creds, uname)

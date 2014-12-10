@@ -34,6 +34,7 @@ krb5_cc_new_unique = check_error(krb5_ctypes.krb5_cc_new_unique)
 krb5_cc_initialize = check_error(krb5_ctypes.krb5_cc_initialize)
 krb5_cc_close = check_error(krb5_ctypes.krb5_cc_close)
 krb5_cc_get_principal = check_error(krb5_ctypes.krb5_cc_get_principal)
+krb5_cc_get_name = krb5_ctypes.krb5_cc_get_name
 krb5_free_principal = check_error(krb5_ctypes.krb5_free_principal)
 krb5_unparse_name = check_error(krb5_ctypes.krb5_unparse_name)
 krb5_free_unparsed_name = check_error(krb5_ctypes.krb5_free_unparsed_name)
@@ -154,6 +155,10 @@ class CCache(object):
         krb5_get_credentials(self._ctx._handle, flags, self._handle, in_creds,
                              creds._handle)
         return creds
+
+class PyCCache(CCache):
+    def __del__(self):
+        pass
 
 class Principal(object):
     def __init__(self, ctx):
