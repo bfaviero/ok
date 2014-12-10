@@ -5,14 +5,14 @@
   <meta name="viewport" content="initial-scale=1.0">
   <title>register</title>
   <link href="http://fonts.googleapis.com/css?family=Roboto:400,400,100|Playfair+Display:400" rel="stylesheet" type="text/css">
-  <link rel="stylesheet" href="url_for('static', filename='css/standardize.css')">
-  <link rel="stylesheet" href="url_for('static', filename='css/register-grid.css')">
-  <link rel="stylesheet" href="url_for('static', filename='css/register.css')">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/standardize.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/register-grid.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/register.css')}}">
 </head>
 <body class="body page-register clearfix">
   <div id="frame" class="container frame clearfix">
     <div id="leftSquare" class="element leftsquare"></div>
-    <img id="cornerLogo" class="image" src="images/logo(4).png">
+    <img id="cornerLogo" class="image" src="{{url_for('static', filename='images/logo(4).png')}}">
     <div id="topLine" class="element topline"></div>
     <p id="headerText" class="text headertext">OAuth-Kerberos</p>
     <div id="banner" class="container banner clearfix">
@@ -22,7 +22,6 @@
   </div>
   <div class="container bodywrapper clearfix">
     <p class="text bodyheader">Welcome to OAuth-Kerberos!</p>
-    <a href="/authorize/facebook" id="facebookbutton" class="_text _text-1"><span class="placeholder">&nbsp;</span></a>
     <a href="/authorize/ok_server" id="okbutton" class="_text _text-2"><span class="placeholder">&nbsp;</span></a>
   </div>
 </body>
