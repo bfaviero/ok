@@ -13,7 +13,7 @@ from subprocess import Popen, PIPE
 import os,sys,inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir) 
+sys.path.insert(0,parentdir)
 print parentdir
 import kerberos_client
 
@@ -29,7 +29,7 @@ app.config['OAUTH_CREDENTIALS'] = {
 def index():
     if 'authenticated' in session:
         return redirect(url_for('authenticated'))
-        
+
     return render_template('index.html')
 
 @app.route('/connector',methods=['GET', 'POST'])
