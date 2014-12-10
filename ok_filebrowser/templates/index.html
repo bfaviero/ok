@@ -11,7 +11,6 @@
             <h2>Hi, {{ session.username }}!</h2>
         {% else %}
             <h2>I don't know you!</h2>
-            <p><a href="{{ url_for('oauth_authorize', provider='facebook') }}">Login with Facebook</a></p>
             <p><a href="{{ url_for('oauth_authorize', provider='ok_server') }}">Login with OK Server</a></p>
         {% endif %}
     </body>

@@ -114,7 +114,7 @@ def service_ticket(service_name):
 
     s = service_mappings[service_name]
 
-    return s
+    return jsonify(ticket=s)
     return kerberos_client.get_service_ticket(t.tgt, s)
 
 @app.route('/username')
