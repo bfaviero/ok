@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+
+import json
+import optparse
+import os.path
+import sys
+
+sys.path.insert(0, os.path.join(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+        'lib'))
+import krb5
+import roost
+
+def zuser_is_personal(recip):
+    return recip and recip[0] != '@'
+
+def main(args):
+    parser = optparse.OptionParser(
+        usage='Usage: %prog [OPTIONS] [RECIPIENTS]')
+    parser.add_option('-c', dest='klass', metavar='CLASS',
+                      help='set the class (default: message)')
+    parser.add_option('-i', dest='instance',
+                      help='set the instance (default: personal)')
+    parser.add_option('-O', default='', dest='opcode',
+                      help='set the opcode (default: %default)')
+    parser.add_option('-r', default=None, dest='realm',
+                      help='set the realm')
+    parser.add_option('-s', default=None, dest='signature',
+                      help='set the signature')
+    parser.add_option('--server', default=roost.DEFAULT_SERVER,
+                      help='Roost backend server (default: %default)')
+    parser.add_option('--service', default=roost.DEFAULT_SERVICE,
+                      help='Service name (default: %default)')
+    (options, recips) = parser.parse_args()
+
+    if not recips and options.klass is None and options.instance is None:
+        parser.error('Pass a class or recipient')
+
+    if options.klass is None:
+        options.klass = 'message'
+    if options.instance is None:
+        options.instance = 'personal'
+    if not recips:
+        recips = ['']
+    if options.realm is not None:
+        recips = ['%s@%s' % (r, options.realm) for r in recips]
+
+    # Get the default principal.
+    ctx = krb5.Context()
+    ccache = ctx.cc_default()
+    principal = ccache.get_principal()
+    principal_str = principal.unparse_name()
+
+    # Get an auth token.
+    token, _expires = roost.get_auth_token(options, principal_str,
+                                           create_user=True)
+
+    # Get the user config for zsig.
+    if options.signature is None:
+        ret = roost.get(options, token, '/v1/info')
+        info = json.loads(ret['info'])
+        options.signature = str(info.get('zsig', 'Sent by Roost'))
+
+    # TODO(davidben): Implement the single-dot thing.
+    print 'Type your message now.  End with control-D.'
+    message = sys.stdin.read().rstrip()
+
+    # Alway staple zephyr creds.
+    zephyr = ctx.build_principal('ATHENA.MIT.EDU', ['zephyr', 'zephyr'])
+    creds = ccache.get_credentials(principal, zephyr)
+
+    for recip in recips:
+        pretty_str = recip
+        if not zuser_is_personal(recip):
+            pretty_str = 'class %s' % options.klass
+        print 'Sending message to %s...' % pretty_str,
+        # Build the data.
+        data = {
+            'message': {
+                'class': options.klass,
+                'instance': options.instance,
+                'recipient': recip,
+                'opcode': options.opcode,
+                'signature': options.signature,
+                'message': message
+            },
+            'credentials': creds.to_dict(),
+        }
+        roost.post(options, token, '/v1/zwrite', data)
+        print "Sent"
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))

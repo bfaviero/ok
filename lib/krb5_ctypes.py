@@ -48,6 +48,7 @@ class krb5_data(ctypes.Structure):
 class _krb5_ccache(ctypes.Structure):
     _fields_ = [('data', krb5_pointer),
                 ('ops', ctypes.POINTER(_krb5_cc_ops))]
+
 krb5_ccache = ctypes.POINTER(_krb5_ccache)
 
 class krb5_replay_data(ctypes.Structure):
