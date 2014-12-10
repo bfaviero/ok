@@ -27,6 +27,9 @@ app.config['OAUTH_CREDENTIALS'] = {
 
 @app.route('/')
 def index():
+    if 'authenticated' in session:
+        return redirect(url_for('authenticated'))
+        
     return render_template('index.html')
 
 @app.route('/connector',methods=['GET', 'POST'])
@@ -37,7 +40,7 @@ def connector():
     user = session['username']
     root = '/afs/athena.mit.edu/user/%s/%s/%s' % (user[0], user[1], user)
 
-    kerberos_client.store_service_ticket_jank(session['afs_ticket'], user)
+    kerberos_client.store_service_ticket(session['afs_ticket'], user)
     output = Popen(["aklog"], stdout=PIPE).communicate()[0]
 
     import pdb
@@ -113,7 +116,7 @@ def connector():
         else:
             res +=  json.dumps(response, indent = True)  + '\n'
 
-    # kerberos_client.clear_service_ticket(session)
+    kerberos_client.clear_service_ticket()
 
     return Response(res, status = status, mimetype = 'application/json')
 
