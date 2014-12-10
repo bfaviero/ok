@@ -1,102 +1,34 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Authorization</title>
-
-  <style>
-    body{
-      background-color: #FCFBE3;
-    }
-    .container{
-      margin: 10px auto;
-      width: 400px;
-    }
-
-    #title{
-      font-size: 2.5em;
-      font-weight: bold;
-    }
-
-    #form{
-      background-color: #A7C5BD;
-      width: 400px;
-      padding: 10px;
-    }
-
-    #request{
-      font-size: 2em;
-    }
-  .btn-yes {
-  color: #fff;
-  background-color: #337ab7;
-  border-color: #2e6da4;
-  }
-
-  .btn-no {
-  color: #fff;
-  background-color: #CF4647;
-  border-color: #CF4647;
-  }
-
-  .btn {
-    display: inline-block;
-    padding: 6px 12px;
-    margin-bottom: 0;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.42857143;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    -ms-touch-action: manipulation;
-    touch-action: manipulation;
-    cursor: pointer;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    background-image: none;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    }    
-
-    .ok-text {
-    display: block;
-    width: 100%;
-    height: 34px;
-    margin: 5px 0;
-    font-size: 14px;
-    line-height: 1.42857143;
-    color: #555;
-    background-color: #fff;
-    background-image: none;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-    -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
-    -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-}
-
-  </style>
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0">
+  <title>index-copy</title>
+  <link href="http://fonts.googleapis.com/css?family=Roboto:400,400,100|Roboto+Condensed:300|Playfair+Display:400" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/standardize.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/authorize.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/authorize-grid.css')}}">
 </head>
-<body>
-  <div class="container">
-  <div id="title">Welcome to OK Server</div>
+<body class="body page-index-copy clearfix">
+  <div id="frame" class="container bodywrapper container-1 clearfix">
+    <div id="leftSquare" class="element leftsquare"></div>
+    <img id="cornerLogo" class="image _image" src="{{url_for('static', filename='images/logo(4).png')}}">
+    <div id="topLine" class="element topline"></div>
+    <p id="headerText" class="text headertext">OAuth-Kerberos</p>
+    <div id="banner" class="container banner clearfix">
+      <div id="bannerBackground" class="element bannerbackground"></div>
+      <p id="headerText" class="text bannertext">Please enter a client ID and callback URL</p>
+    </div>
   </div>
-  <div id="form" class="container">
-    <div id="request">{{ client.client_id }} is requesting access to the following services</div>
-
-    <ul>
-      {% for s in services %}
-        <li>{{s}}</li>
-      {% endfor %}
-    <ul>
+  <div id="form" class="container bodywrapper container-3 clearfix">
     <form action="/oauth/authorize" method="post">
-      <p>Allow access?</p>
+      <div class="element form"></div>
+      <p class="text formheader">{{ client.client_id }} is requesting access to the following services</p>
+      {% for s in services %}
+        <img class="image bullet" src="{{url_for('static', filename='images/arrow.png')}}">
+        <p class="text servicetext">{{s}}</p>
+      {% endfor %}
+      <p class="text formtext">Allow access?</p>
       <input type="hidden" name="client_id" value="{{ client.client_id }}">
       <input type="hidden" name="scope" value="{{ scopes|join(' ') }}">
       <input type="hidden" name="response_type" value="{{ response_type }}">
@@ -104,11 +36,11 @@
       {% if state %}
       <input type="hidden" name="state" value="{{ state }}">
       {% endif %}
-        <input class="ok-text" type="text" name="username" value="test_username"></input>
-        <input class="ok-text" type="password" name="password" value="test_password"></input>
 
-      <input class="btn btn-yes" type="submit" name="confirm" value="yes">
-      <input class="btn btn-no" type="submit" name="confirm" value="no">
+      <input class="forminput forminput-1" name="username" placeholder="username" type="text" value="test_username">
+      <input class="forminput forminput-2" name="password" placeholder="password" type="password" value="test_password">
+      <input id="allowButton" class="formbutton formbutton-1" type="submit" name="confirm" value="Allow">
+      <input id="rejectButton" class="formbutton formbutton-2" type="reset" name="reset" value="Reject">
     </form>
   </div>
 </body>

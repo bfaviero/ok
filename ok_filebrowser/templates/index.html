@@ -1,18 +1,28 @@
+<!doctype html>
 <html>
-    <head>
-        <title>OAuth Flask Demo</title>
-    </head>
-    <body>
-        <h1>OAuth Demo</h1>
-        {% for message in get_flashed_messages() %}
-            <p><b>Error</b>: {{ message }}</p>
-        {% endfor %}
-        {% if session.authenticated %}
-            <h2>Hi, {{ session.username }}!</h2>
-            <a href="/logout">Logout</a>
-        {% else %}
-            <h2>I don't know you!</h2>
-            <p><a href="{{ url_for('oauth_authorize', provider='ok_server') }}">Login with OK Server</a></p>
-        {% endif %}
-    </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0">
+  <title>register</title>
+  <link href="http://fonts.googleapis.com/css?family=Roboto:400,400,100|Playfair+Display:400" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/standardize.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/register-grid.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/register.css')}}">
+</head>
+<body class="body page-register clearfix">
+  <div id="frame" class="container frame clearfix">
+    <div id="leftSquare" class="element leftsquare"></div>
+    <img id="cornerLogo" class="image" src="{{url_for('static', filename='images/logo(4).png')}}">
+    <div id="topLine" class="element topline"></div>
+    <p id="headerText" class="text headertext">OAuth-Kerberos</p>
+    <div id="banner" class="container banner clearfix">
+      <div id="bannerBackground" class="element bannerbackground"></div>
+      <p id="headerText" class="text bannertext">Please enter a client ID and callback URL</p>
+    </div>
+  </div>
+  <div class="container bodywrapper clearfix">
+    <p class="text bodyheader">Welcome to OAuth-Kerberos!</p>
+    <a href="/authorize/ok_server" id="okbutton" class="_text _text-2"><span class="placeholder">&nbsp;</span></a>
+  </div>
+</body>
 </html>
