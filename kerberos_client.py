@@ -22,6 +22,9 @@ def clear_service_ticket_jank():
 
 # Store a service ticket in the default cache (kind of)
 def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
+    ctx = krb5.Context()
+    creds = deserialize_cred(ctx, creds)
+
     old_user = 'bcyphers'
     old_realm = 'ATHENA.MIT.EDU'
 
@@ -82,9 +85,9 @@ def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
 # Get a ticket for a specific service.
 def get_service_ticket(userid, tgt_creds, svc_args,
         realm='ATHENA.MIT.EDU'):
-
     # create a context
     ctx = krb5.Context()
+    tgt_creds = deserialize_cred(ctx, tgt_creds)
 
     # create a new in-memory credential cache to hold the credentials
     ccache = krb5.CCache(ctx)
@@ -104,12 +107,11 @@ def get_service_ticket(userid, tgt_creds, svc_args,
     service = ctx.build_principal(realm, svc_args)
     creds = ccache.get_credentials(principal, service)
 
-    return ctx, serialize_cred(ctx, creds)
+    return serialize_cred(ctx, creds)
 
 
 # Get a ticket-granting ticket.
 def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
-
     # create a context and credentials object
     # the PyCredentials object overrides davidben's implementation to prevent
     # python double-freeing memory
@@ -141,7 +143,7 @@ def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
                     None,                           # in_tkt_service - name of TGS
                     creds_opt)                      # krb5_get_init_creds_opt_ptr
 
-    return ctx, serialize_cred(ctx, creds)
+    return serialize_cred(ctx, creds)
 
 
 if __name__ == '__main__':
@@ -154,19 +156,18 @@ if __name__ == '__main__':
 
     # I won't store this I swear
     passwd = getpass.getpass()
-    ctx, tgt_creds = get_tgt(uname, passwd)
+    tgt_creds = get_tgt(uname, passwd)
 
     print 'TGT generated:'
     print
     print tgt_creds
     print
 
-    ctx, svc_creds = get_service_ticket(uname, deserialize_cred(ctx, tgt_creds),
-            svc_args=sargs)
+    svc_creds = get_service_ticket(uname, tgt_creds, svc_args=sargs)
 
     print 'Service ticket generated:'
     print
     print svc_creds
     print
 
-    store_service_ticket_jank(deserialize_cred(ctx, svc_creds), uname)
+    store_service_ticket_jank(svc_creds, uname)
