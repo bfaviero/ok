@@ -83,8 +83,10 @@ def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
 
 
 # Get a ticket for a specific service.
-def get_service_ticket(userid, tgt_creds, svc_args,
-        realm='ATHENA.MIT.EDU'):
+def get_service_ticket(userid, tgt_creds, service, realm='ATHENA.MIT.EDU'):
+    # the service name must be a list
+    svc_args = service.split('/')
+
     # create a context
     ctx = krb5.Context()
     tgt_creds = deserialize_cred(ctx, tgt_creds)
@@ -152,7 +154,7 @@ if __name__ == '__main__':
     uname, service = sys.argv[1:]
 
     # default to using afs
-    sargs = service.split('/') if service else ['afs', 'athena.mit.edu']
+    sargs = service if service else 'afs/athena.mit.edu'
 
     # I won't store this I swear
     passwd = getpass.getpass()
@@ -163,7 +165,7 @@ if __name__ == '__main__':
     print tgt_creds
     print
 
-    svc_creds = get_service_ticket(uname, tgt_creds, svc_args=sargs)
+    svc_creds = get_service_ticket(uname, tgt_creds, sargs)
 
     print 'Service ticket generated:'
     print
