@@ -62,8 +62,7 @@ def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
                             None, ccache_ptr)
 
     # initialize the kerberos cache
-    krb5.krb5_cc_initialize(ctx._handle, ccache_ptr.contents,
-                            p._handle.contents)
+    krb5.krb5_cc_initialize(ctx._handle, ccache_ptr.contents, p._handle)
 
     krb5.krb5_cc_store_cred(ctx._handle, ccache_ptr.contents, creds._handle)
     ccache._handle = ccache_ptr
