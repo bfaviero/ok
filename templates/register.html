@@ -1,113 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Authorization</title>
-
-  <style>
-    body{
-      background-color: #FCFBE3;
-    }
-    .container{
-      margin: 10px auto;
-      width: 400px;
-    }
-
-    #title{
-      font-size: 2.5em;
-      font-weight: bold;
-    }
-
-    #form{
-      background-color: #A7C5BD;
-      width: 400px;
-      padding: 10px;
-    }
-
-    #request{
-      font-size: 2em;
-    }
-  .btn-yes {
-  color: #fff;
-  background-color: #337ab7;
-  border-color: #2e6da4;
-  }
-
-  .btn-no {
-  color: #fff;
-  background-color: #CF4647;
-  border-color: #CF4647;
-  }
-
-  .btn {
-    display: inline-block;
-    padding: 6px 12px;
-    margin-bottom: 0;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.42857143;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    -ms-touch-action: manipulation;
-    touch-action: manipulation;
-    cursor: pointer;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    background-image: none;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    }
-
-    .ok-text {
-    display: block;
-    width: 100%;
-    height: 34px;
-    margin: 5px 0;
-    font-size: 14px;
-    line-height: 1.42857143;
-    color: #555;
-    background-color: #fff;
-    background-image: none;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-    -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
-    -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-}
-    #banner {
-      width: 100%;
-      background: green;
-      text-align: center;
-      font-size: 40px;
-      position: absolute;
-      opacity: 0.98;
-      display: none;
-    }
-
-  </style>
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1.0">
+  <title>request-access</title>
+  <link href="http://fonts.googleapis.com/css?family=Roboto:400,100|Playfair+Display:400" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/standardize.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/register-grid.css')}}">
+  <link rel="stylesheet" href="{{url_for('static', filename='css/register.css')}}">
 </head>
-<body>
-  <div id="banner">
-    Client Registered
+<body class="body page-request-access clearfix">
+  <div id="frame" class="container frame clearfix">
+    <div id="leftSquare" class="element leftsquare"></div>
+    <img id="cornerLogo" class="image" src="{{url_for('static', filename='images/logo(4).png')}}">
+    <div id="topLine" class="element topline"></div>
+    <p id="headerText" class="text headertext">OAuth-Kerberos</p>
+    <div id="banner" class="container banner clearfix">
+      <div id="bannerBackground" class="element bannerbackground"></div>
+      <p id="headerText" class="text bannertext">Please enter a client ID and callback URL</p>
+    </div>
   </div>
-  <div class="container">
-  <div id="title">Welcome to OK Server</div>
-  </div>
-  <div id="form" class="container">
-    <h4>Register a client</h4>
+  <div id="form" class="container bodywrapper clearfix">
+    <div class="element shadow"></div>
+    <p class="text formheader">Register a client</p>
+    <p class="textd">Client ID</p>
     <form action="/oauth/client/register" name="form" method="post">
-      <input id="client_id" class="ok-text" type="text" name="client_id" value="" placeholder="client_id"></input>
-      <input id="client_secret" class="ok-text" type="text" name="client_callback" value="http://localhost:5001/callback/ok_server" placeholder="client_secret"></input>
-      <span>AFS</span>&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="service" value="AFS"><br>
-      <span>Zephyr</span><input type="checkbox" name="service" value="Zephyr"><br>
-      <input class="btn btn-yes" type="submit" name="confirm" value="yes">
-      <input class="btn btn-no" type="submit" name="confirm" value="no">
+      <input class="textfield textfield-1" name="client_id" placeholder="identifying string" type="text">
+      <p class="text textfieldlabel">Callback URL</p>
+      <input class="textfield textfield-2" name="client_callback" placeholder="http://localhost:5001/callback/ok_server" type="text">
+      <p class="text formtext">What services do&nbsp;you need access to?</p>
+      <label class="checkbox-label servicecheckbox checkbox-label-1 clearfix">
+        <input class="checkbox" name="AFS" value="AFS" type="checkbox">
+        <span class="point-text">MIT AFS</span>
+      </label>
+      <label class="checkbox-label servicecheckbox checkbox-label-2 clearfix">
+        <input class="checkbox" name="Zephyr" value="Zephyr" type="checkbox">
+        <span class="point-text">Zephyr</span>
+      </label>
+      <input class="submitbutton" type="submit" name="confirm" value="Submit">
     </form>
   </div>
   <script>
