@@ -247,6 +247,10 @@ class Credentials(object):
 
         return ret
 
+class PyCredentials(Credentials):
+    def __del__(self):
+        pass
+
 class Ticket(object):
     def __init__(self, ctx):
         self._ctx = ctx
