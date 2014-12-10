@@ -11,6 +11,9 @@ import base64
 import json
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 
+def clear_service_ticket():
+    pass
+
 def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
     old_user = 'bcyphers'
     old_realm = 'ATHENA.MIT.EDU'
