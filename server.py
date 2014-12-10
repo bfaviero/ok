@@ -134,7 +134,6 @@ def setup():
 
 if __name__ == '__main__':
     # setup()
-    app.debug = True
-    app.run(ssl_context='adhoc')
+    app.run(port=80, debug=True, host='0.0.0.0',ssl_context='adhoc')
 
     #http://localhost:5000/oauth/authorize?client_id=test_client_1&response_type=code&username=test_user&redirect_uri=http%3A%2F%2Flocalhost%3A5001%2Fcallback

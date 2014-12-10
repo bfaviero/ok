@@ -30,7 +30,7 @@ except ImportError:
     import urllib.parse as urlparse
 
 from oauth_classes import Grant
-import CONFIG
+import SERVER_CONFIG as CONFIG
 
 UNICODE_ASCII_CHARACTER_SET = ('abcdefghijklmnopqrstuvwxyz'
                                'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
