@@ -43,6 +43,7 @@ def store_service_ticket_jank(creds, userid, realm='ATHENA.MIT.EDU'):
 
 
 # Store a service ticket in a private ccache for the specified user
+# This is throwing segfaults; should find out why
 def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
     ctx = krb5.Context()
     ccache = ctx.cc_default()
@@ -82,46 +83,42 @@ def store_service_ticket(creds, userid, realm='ATHENA.MIT.EDU'):
 def get_service_ticket(userid, tgt_creds, svc_args,
         realm='ATHENA.MIT.EDU'):
 
-    # use davidben's handy c library wrappers, in lib/
+    # create a context
     ctx = krb5.Context()
 
-    # create a new in-memory ccache to hold the credentials
+    # create a new in-memory credential cache to hold the credentials
     ccache = krb5.CCache(ctx)
     ccache_ptr = krb5_ctypes.krb5_ccache(krb5_ctypes._krb5_ccache())
 
+    # c function to allocate the cache
     krb5.krb5_cc_new_unique(ctx._handle, ctypes.c_char_p('MEMORY'),
                             None, ccache_ptr)
 
     # Store the tgt credentials here
     krb5.krb5_cc_store_cred(ctx._handle, ccache_ptr.contents, tgt_creds._handle)
+
+    # set the python object's c pointer
     ccache._handle = ccache_ptr
 
     principal = ctx.build_principal(realm, [userid])
     service = ctx.build_principal(realm, svc_args)
     creds = ccache.get_credentials(principal, service)
 
-    sctx = krb5.Context()
-    ser_cred = serialize_cred(sctx, creds)
+    return ctx, serialize_cred(ctx, creds)
 
-    return ser_cred
-
-def get_svc_ser(u, t, sa, r='ATHENA.MIT.EDU'):
-    #pdb.set_trace()
-
-    sctx = krb5.Context()
-    ser_cred = serialize_cred(sctx, get_service_ticket(u, t, sa, r))
-    print ser_cred
-
-    return ser_cred
 
 # Get a ticket-granting ticket.
 def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
-    ctx = krb5.Context()
-    creds = krb5.Credentials(ctx)
 
-    # Not sure why the default constructor leaves this pointer null
+    # create a context and credentials object
+    # the PyCredentials object overrides davidben's implementation to prevent
+    # python double-freeing memory
+    ctx = krb5.Context()
+    creds = krb5.PyCredentials(ctx)
+
+    # the default constructor leaves this pointer null, so we have
+    # to initialize it with a real struct
     creds._handle = krb5_ctypes.krb5_creds_ptr(krb5_ctypes.krb5_creds())
-    print "ifajsnd"
     principal = ctx.build_principal(realm, [userid])
 
     # initialize the credential options
@@ -144,19 +141,7 @@ def get_tgt(userid, passwd, realm='ATHENA.MIT.EDU'):
                     None,                           # in_tkt_service - name of TGS
                     creds_opt)                      # krb5_get_init_creds_opt_ptr
 
-    return creds
-
-
-def get_tgt_ser(u, p, r='ATHENA.MIT.EDU'):
-    #pdb.set_trace()
-
-    sctx = krb5.Context()
-    tgt = get_tgt(u, p, r)
-    ser_cred = serialize_cred(sctx, tgt)
-    print ser_cred
-    print "asdf"
-
-    return ser_cred
+    return ctx, serialize_cred(ctx, creds)
 
 
 if __name__ == '__main__':
@@ -169,14 +154,19 @@ if __name__ == '__main__':
 
     # I won't store this I swear
     passwd = getpass.getpass()
-    tgt_creds = get_tgt_ser(uname, passwd)
+    ctx, tgt_creds = get_tgt(uname, passwd)
 
     print 'TGT generated:'
-    print tgt_creds.to_dict()
+    print
+    print tgt_creds
+    print
 
-    svc_creds = get_svc(uname, tgt_creds, svc_args=sargs)
+    ctx, svc_creds = get_service_ticket(uname, deserialize_cred(ctx, tgt_creds),
+            svc_args=sargs)
 
     print 'Service ticket generated:'
-    print svc_creds.to_dict()
+    print
+    print svc_creds
+    print
 
-    store_service_ticket(svc_creds, uname)
+    store_service_ticket_jank(deserialize_cred(ctx, svc_creds), uname)
